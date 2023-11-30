@@ -5,6 +5,7 @@ import cl.kanopus.common.data.enums.SortOrder;
 import cl.kanopus.common.enums.EnumIdentifiable;
 import cl.kanopus.common.util.CryptographyUtils;
 import cl.kanopus.common.util.GsonUtils;
+import cl.kanopus.common.util.Utils;
 import cl.kanopus.jdbc.DAOInterface;
 import cl.kanopus.jdbc.entity.Mapping;
 import cl.kanopus.jdbc.entity.annotation.Column;
@@ -19,6 +20,7 @@ import cl.kanopus.jdbc.impl.engine.OracleEngine;
 import cl.kanopus.jdbc.impl.engine.PostgresEngine;
 import cl.kanopus.jdbc.impl.engine.SQLServerEngine;
 import cl.kanopus.jdbc.util.JdbcCache;
+import cl.kanopus.jdbc.util.QueryIterator;
 import cl.kanopus.jdbc.util.SQLQueryDynamic;
 import cl.kanopus.jdbc.util.parser.ByteaJsonListParser;
 import cl.kanopus.jdbc.util.parser.ByteaJsonParser;
@@ -34,6 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.postgresql.util.PGobject;
@@ -219,6 +222,25 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
         return AbstractDAO.this.find(customSql.toString());
     }
 
+    public Iterator findQueryIterator(SQLQueryDynamic sqlQuery) {
+        int limit = Utils.defaultValue(sqlQuery.getLimit(), 10000);
+        if (!sqlQuery.isSorted()) {
+            throw new DataException("It is necessary to specify a sort with identifier to be able to iterate over the records.");
+        }
+        return new QueryIterator<Map<String, Object>>(limit) {
+
+            @Override
+            public List getData(int limit, int offset) {
+                sqlQuery.setLimit(limit);
+                sqlQuery.setOffset(offset);
+                
+                List records = getJdbcTemplate().query(createSqlPagination2Engine(sqlQuery), sqlQuery.getParams(), rowMapper(sqlQuery.getClazz(), sqlQuery.isLoadAll()));
+                sqlQuery.setTotalResultCount(sqlQuery.getTotalResultCount() + records.size());
+                return records;
+            }
+        };
+    }
+ 
     protected List<T> find(String sql) throws DataException {
         List list;
         try {
@@ -393,7 +415,7 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
         return getByID(clazz, false, keys);
     }
 
-    protected <T extends Mapping>T getByID(Class<T> clazz, boolean loadAll, Object... keys) throws DataException {
+    protected <T extends Mapping> T getByID(Class<T> clazz, boolean loadAll, Object... keys) throws DataException {
         Table table = getTableName(clazz);
         if (table.keys() == null || table.keys().length == 0) {
             throw new DataException("It is necessary to specify the primary keys for the entity: " + table.getClass().getCanonicalName());

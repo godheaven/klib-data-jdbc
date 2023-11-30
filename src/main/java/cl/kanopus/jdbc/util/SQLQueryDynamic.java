@@ -137,6 +137,10 @@ public class SQLQueryDynamic {
         return limit != null;
     }
 
+    public boolean isSorted() {
+        return sqlOrderBy != null && sqlOrderBy.length > 0;
+    }
+
     public boolean isLoadAll() {
         return loadAll;
     }

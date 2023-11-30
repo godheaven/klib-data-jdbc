@@ -18,11 +18,18 @@ import java.util.List;
  */
 public abstract class QueryIterator<T> implements Iterator<T> {
 
-    private static final int LIMIT = 250;
+    private int limit = 1000;
     private int offset = 0;
     private Collection<T> list = new ArrayList<>();
     private Iterator<T> iterator = list.iterator();
     private boolean execute = true;
+
+    protected QueryIterator() {
+    }
+
+    protected QueryIterator(int limit) {
+        this.limit = limit;
+    }
 
     public abstract List<T> getData(int limit, int offset);
 
@@ -30,13 +37,13 @@ public abstract class QueryIterator<T> implements Iterator<T> {
     public final boolean hasNext() {
         boolean hasNext = iterator.hasNext();
         if (!hasNext && execute) {
-            list = getData(LIMIT, offset);
+            list = getData(limit, offset);
             iterator = list.iterator();
             hasNext = iterator.hasNext();
             if (list.isEmpty()) {
                 execute = false;
             }
-            offset += LIMIT;
+            offset += limit;
         }
         return hasNext;
     }

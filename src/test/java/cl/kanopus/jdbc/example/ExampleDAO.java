@@ -45,7 +45,7 @@ public class ExampleDAO extends AbstractBaseDAO<TestData, Long> implements DAOIn
         String sql = "SELECT * FROM tmp_test_data";
         final HashMap params = new HashMap();
 
-        Iterator<TestData> iterator = new QueryIterator<TestData>() {
+        Iterator<TestData> iterator = new QueryIterator<TestData>(3) {
             @Override
             public List<TestData> getData(int limit, int offset) {
                 return find(sql, params, TestData.class, limit, offset);
@@ -53,5 +53,19 @@ public class ExampleDAO extends AbstractBaseDAO<TestData, Long> implements DAOIn
         };
         return iterator;
 
+    }
+
+    public Iterator<TestData> findQueryIteratorWithSQLQueryDynamicDefaultLimit() {
+        SQLQueryDynamic query = new SQLQueryDynamic(TestData.class);
+        query.setOrderBy("pk_test_data");
+        return super.findQueryIterator(query);
+    }
+    
+    
+    public Iterator<TestData> findQueryIteratorWithSQLQueryDynamicDefaultLimit5() {
+        SQLQueryDynamic query = new SQLQueryDynamic(TestData.class);
+        query.setOrderBy("pk_test_data");
+        query.setLimit(5);
+        return super.findQueryIterator(query);
     }
 }

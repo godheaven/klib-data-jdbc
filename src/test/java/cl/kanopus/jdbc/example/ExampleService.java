@@ -51,6 +51,26 @@ public class ExampleService {
     }
 
     @Test
+    public void exampleFindQueryIteratorWithSQLQueryDynamicDefaultLimit() {
+        Iterator<TestData> iterator = dao.findQueryIteratorWithSQLQueryDynamicDefaultLimit();
+        while (iterator.hasNext()) {
+            TestData data = iterator.next();
+            System.out.println(data.getId());
+        }
+    }
+    
+    
+    @Test
+    public void exampleFindQueryIteratorWithSQLQueryDynamicDefaultLimit5() {
+        Iterator<TestData> iterator = dao.findQueryIteratorWithSQLQueryDynamicDefaultLimit5();
+        while (iterator.hasNext()) {
+            TestData data = iterator.next();
+            System.out.println(data.getId());
+        }
+    }
+    
+
+    @Test
     public void exampleGetByID() {
         TestData entity = dao.getByID((long) 1);
         Assertions.assertNotNull(entity);

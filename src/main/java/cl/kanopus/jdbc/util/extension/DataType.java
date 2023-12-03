@@ -3,10 +3,6 @@ package cl.kanopus.jdbc.util.extension;
 import cl.kanopus.common.enums.EnumIdentifiable;
 import cl.kanopus.jdbc.util.SQLQueryDynamic.MatchMode;
 
-/**
- *
- * @author pablo
- */
 public enum DataType implements EnumIdentifiable<String> {
     ALPHANUMERIC(
             MatchMode.EQUAL,

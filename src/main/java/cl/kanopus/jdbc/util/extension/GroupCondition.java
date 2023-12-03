@@ -1,15 +1,20 @@
 package cl.kanopus.jdbc.util.extension;
 
 import cl.kanopus.jdbc.util.SQLQueryDynamic.MatchMode;
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- * @author pablo
- */
 public class GroupCondition {
 
     private List<Condition> conditions;
+
+    public GroupCondition() {
+        this.conditions = new ArrayList<>();
+    }
+
+    public GroupCondition(List<Condition> conditions) {
+        this.conditions = conditions;
+    }
 
     public List<Condition> getConditions() {
         return conditions;
@@ -19,6 +24,10 @@ public class GroupCondition {
         this.conditions = conditions;
     }
 
+    public void addCondition(Condition condition) {
+        this.conditions.add(condition);
+    }
+    
     public static class Condition {
 
         public Condition() {

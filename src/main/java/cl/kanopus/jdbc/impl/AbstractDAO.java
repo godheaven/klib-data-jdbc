@@ -233,14 +233,20 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
             public List getData(int limit, int offset) {
                 sqlQuery.setLimit(limit);
                 sqlQuery.setOffset(offset);
-                
-                List records = getJdbcTemplate().query(createSqlPagination2Engine(sqlQuery), sqlQuery.getParams(), rowMapper(sqlQuery.getClazz(), sqlQuery.isLoadAll()));
+
+                List records = null;
+                if (sqlQuery.getClazz() != null) {
+                    records = getJdbcTemplate().query(createSqlPagination2Engine(sqlQuery), sqlQuery.getParams(), rowMapper(sqlQuery.getClazz(), sqlQuery.isLoadAll()));
+                } else {
+                    records = getJdbcTemplate().queryForList(createSqlPagination2Engine(sqlQuery), sqlQuery.getParams());
+                }
+
                 sqlQuery.setTotalResultCount(sqlQuery.getTotalResultCount() + records.size());
                 return records;
             }
         };
     }
- 
+
     protected List<T> find(String sql) throws DataException {
         List list;
         try {

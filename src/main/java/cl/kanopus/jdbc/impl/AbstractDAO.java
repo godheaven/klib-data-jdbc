@@ -223,7 +223,7 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
     }
 
     public Iterator findQueryIterator(SQLQueryDynamic sqlQuery) {
-        int limit = Utils.defaultValue(sqlQuery.getLimit(), 10000);
+        int limit = Utils.defaultValue(sqlQuery.getLimit(), 2500);
         if (!sqlQuery.isSorted()) {
             throw new DataException("It is necessary to specify a sort with identifier to be able to iterate over the records.");
         }

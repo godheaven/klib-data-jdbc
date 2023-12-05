@@ -676,6 +676,12 @@ public class SQLQueryDynamic {
         this.setOrderBy(columns, sorts);
     }
 
+    public void addGroupCondition(GroupCondition groupCondition) {
+        List<GroupCondition> groupConditions = new ArrayList<>();
+        groupConditions.add(groupCondition);
+        addGroupConditions(groupConditions);
+    }
+
     public void addGroupConditions(List<GroupCondition> groupConditions) {
         if (!Utils.isNullOrEmpty(groupConditions)) {
             this.sqlWhere.append((this.index == 0) ? "(" : " AND (");

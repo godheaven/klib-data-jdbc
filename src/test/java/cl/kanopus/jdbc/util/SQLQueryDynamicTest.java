@@ -47,7 +47,7 @@ public class SQLQueryDynamicTest {
         Assertions.assertTrue(sqlQuery.getParams().size() == 1);
         Assertions.assertEquals("VALUE1", sqlQuery.getParams().get("test"));
     }
-    
+
     @Test
     public void validateConditionWhere() {
         final String parameterName = "userid";
@@ -340,12 +340,12 @@ public class SQLQueryDynamicTest {
         });
 
     }
-    
-      @Test
+
+    @Test
     public void validateSingleDateConditionWithCastxx() {
         SQLQueryDynamic query = new SQLQueryDynamic("SELECT * FROM TABLE");
         List<GroupCondition> groupConditionList = new ArrayList<>();
-        
+
         //group1
         GroupCondition group1 = new GroupCondition();
         List<GroupCondition.Condition> conditions1 = new ArrayList<>();
@@ -354,7 +354,7 @@ public class SQLQueryDynamicTest {
         conditions1.add(new GroupCondition.Condition("c3", 3, DataType.NUMERIC, SQLQueryDynamic.MatchMode.EQUAL));
         group1.setConditions(conditions1);
         groupConditionList.add(group1);
-        
+
         //group2
         GroupCondition group2 = new GroupCondition();
         List<GroupCondition.Condition> conditions2 = new ArrayList<>();
@@ -363,14 +363,12 @@ public class SQLQueryDynamicTest {
         conditions2.add(new GroupCondition.Condition("c6", 6, DataType.NUMERIC, SQLQueryDynamic.MatchMode.NOT_EQUAL));
         group2.setConditions(conditions2);
         groupConditionList.add(group2);
-        
-        
+
         query.addGroupConditions(groupConditionList);
         Assertions.assertEquals("SELECT * FROM TABLE WHERE ((c1 BETWEEN TO_TIMESTAMP(:c1_0_start, 'YYYY-MM-DD') AND TO_TIMESTAMP(:c1_0_end, 'YYYY-MM-DD HH24:MI:SS') AND UPPER(c2)=:c2_1 AND c3=:c3_2) OR (c4::date<=:c4_3 AND UPPER(c5) LIKE '%'||:c5_4||'%' AND c6<>:c6_5))", query.getSQL());
-        
 
     }
-    
+
     @Test
     public void validateSingleDateConditionWithCast() {
         SQLQueryDynamic query = new SQLQueryDynamic("SELECT * FROM TABLE");
@@ -409,6 +407,78 @@ public class SQLQueryDynamicTest {
 
         query.addGroupConditions(groupConditionList);
         Assertions.assertEquals("SELECT * FROM TABLE WHERE ((c1 BETWEEN :c1_0_start AND :c1_0_end))", query.getSQL());
+    }
+
+    @Test
+    public void validateGroupConditionSingleEmpty() {
+        SQLQueryDynamic query = new SQLQueryDynamic("SELECT * FROM TABLE");
+
+        GroupCondition.Condition condition = new GroupCondition.Condition();
+        condition.setColumn("c1");
+        condition.setValue(0);
+        condition.setMatchMode(SQLQueryDynamic.MatchMode.EQUAL);
+        condition.setDataType(DataType.NUMERIC);
+
+        GroupCondition groupCondition = new GroupCondition();
+        groupCondition.addCondition(condition);
+
+        query.addGroupCondition(groupCondition);
+        Assertions.assertEquals("SELECT * FROM TABLE", query.getSQL());
+    }
+
+    @Test
+    public void validateGroupConditionMultipleOneEmpty() {
+        SQLQueryDynamic query = new SQLQueryDynamic("SELECT * FROM TABLE");
+
+        GroupCondition.Condition c1 = new GroupCondition.Condition();
+        c1.setColumn("c1");
+        c1.setValue(0);
+        c1.setMatchMode(SQLQueryDynamic.MatchMode.EQUAL);
+        c1.setDataType(DataType.NUMERIC);
+
+        GroupCondition.Condition c2 = new GroupCondition.Condition();
+        c2.setColumn("c2");
+        c2.setValue(1);
+        c2.setMatchMode(SQLQueryDynamic.MatchMode.EQUAL);
+        c2.setDataType(DataType.NUMERIC);
+
+        GroupCondition groupCondition = new GroupCondition();
+        groupCondition.addCondition(c1);
+        groupCondition.addCondition(c2);
+
+        query.addGroupCondition(groupCondition);
+        Assertions.assertEquals("SELECT * FROM TABLE WHERE ((c2=:c2_0))", query.getSQL());
+    }
+    
+    @Test
+    public void validateGroupConditionMultipleEmpty() {
+        SQLQueryDynamic query = new SQLQueryDynamic("SELECT * FROM TABLE");
+        query.addCondition("c1", "Text", SQLQueryDynamic.Condition.EQUAL);
+
+        GroupCondition.Condition c1 = new GroupCondition.Condition();
+        c1.setColumn("gc1");
+        c1.setValue(0);
+        c1.setMatchMode(SQLQueryDynamic.MatchMode.EQUAL);
+        c1.setDataType(DataType.NUMERIC);
+
+        GroupCondition.Condition c2 = new GroupCondition.Condition();
+        c2.setColumn("gc2");
+        c2.setValue(0);
+        c2.setMatchMode(SQLQueryDynamic.MatchMode.EQUAL);
+        c2.setDataType(DataType.NUMERIC);
+
+        GroupCondition groupCondition1 = new GroupCondition();
+        groupCondition1.addCondition(c1);
+        groupCondition1.addCondition(c2);
+        
+        GroupCondition groupCondition2 = new GroupCondition();
+        groupCondition2.addCondition(c1);
+        groupCondition2.addCondition(c2);
+
+        query.addGroupCondition(groupCondition1);
+        query.addGroupCondition(groupCondition2);
+        
+        Assertions.assertEquals("SELECT * FROM TABLE WHERE UPPER(c1)=:c1_0", query.getSQL());
     }
 
     @Test

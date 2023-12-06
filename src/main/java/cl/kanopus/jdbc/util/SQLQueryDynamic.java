@@ -692,6 +692,9 @@ public class SQLQueryDynamic {
                 generateConditions(groupConditions.get(i).getConditions());
             }
             this.sqlWhere.append(")");
+            
+            //removing empty parentheses when condition groups cannot be applied 
+            Utils.replaceAll(sqlWhere, " AND (())", "");
         }
 
     }

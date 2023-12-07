@@ -1,5 +1,8 @@
 package cl.kanopus.jdbc.impl.engine;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  *
  * @author Pablo Diaz Saavedra
@@ -7,6 +10,9 @@ package cl.kanopus.jdbc.impl.engine;
  */
 public class SQLServerEngine implements CustomEngine {
 
+    
+    final Pattern pattern = Pattern.compile("([\\\\.a-zA-Z0-9_-]+)::date", Pattern.MULTILINE);
+    
     private SQLServerEngine() {
     }
 
@@ -39,6 +45,9 @@ public class SQLServerEngine implements CustomEngine {
 
     @Override
     public String prepareSQL2Engine(String sql) {
-        return sql.replaceAll("\\|\\|", "+").replaceAll("count\\(\\*\\)", "count_big\\(\\*\\)");
+        String newSql =  sql.replaceAll("\\|\\|", "+").replaceAll("count\\(\\*\\)", "count_big\\(\\*\\)");
+        
+        Matcher matcher = pattern.matcher(newSql);
+        return matcher.replaceAll("CAST($1 as date)");
     }
 }

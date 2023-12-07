@@ -786,7 +786,7 @@ public class SQLQueryDynamic {
             throw new IllegalArgumentException("QueryDynamic: MatchMode." + condition.getMatchMode() + " is not supported with " + condition.getDataType());
         }
 
-        if (condition.getDataType() == DataType.DATE && !(condition.getValue() instanceof Date || condition.getValue() instanceof List)) {
+        if (condition.getDataType() == DataType.DATE && !(condition.getValue() instanceof Date || condition.getValue() instanceof LocalDate || condition.getValue() instanceof List)) {
             throw new IllegalArgumentException("QueryDynamic: DataType.DATE cannot be applied to " + condition.getValue());
         }
 

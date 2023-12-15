@@ -104,26 +104,31 @@ public class SQLQueryDynamic {
     protected int index = 0;
     private boolean enableOrderByWithLower = false;
     private boolean enableUppercaseAutomatically = true;
+    private boolean enablePrefixParam = false;
     private boolean clauseWhereAutomatically = true;
     private final Class<? extends Mapping> clazz;
     private boolean loadAll;
+    private String prefixParam;
 
     private Map<String, String> propertiesTranslationMap;
 
     public SQLQueryDynamic(String sqlSelect) {
         this.clazz = null;
         this.sqlSelect = sqlSelect;
+        this.prefixParam = Utils.generateRandomText(5);
     }
 
     public SQLQueryDynamic(String sqlSelect, Class<? extends Mapping> clazz) {
         this.clazz = clazz;
         this.sqlSelect = sqlSelect;
+        this.prefixParam = Utils.generateRandomText(5);
     }
 
     public SQLQueryDynamic(Class<? extends Mapping> clazz) {
         this.clazz = clazz;
         this.sqlSelect = JdbcCache.sqlBase(clazz);
         this.propertiesTranslationMap = JdbcCache.translationMap(clazz);
+        this.prefixParam = Utils.generateRandomText(5);
     }
 
     public SQLQueryDynamic(Class<? extends Mapping> clazz, boolean loadAll) {
@@ -131,6 +136,7 @@ public class SQLQueryDynamic {
         this.loadAll = loadAll;
         this.sqlSelect = JdbcCache.sqlBase(clazz, loadAll);
         this.propertiesTranslationMap = JdbcCache.translationMap(clazz);
+        this.prefixParam = Utils.generateRandomText(5);
     }
 
     public boolean isLimited() {
@@ -157,12 +163,24 @@ public class SQLQueryDynamic {
         this.enableUppercaseAutomatically = enableUppercaseAutomatically;
     }
 
+    public void setEnablePrefixParam(boolean enablePrefixParam) {
+        this.enablePrefixParam = enablePrefixParam;
+    }
+
     public void setClauseWhereAutomatically(boolean clauseWhereAutomatically) {
         this.clauseWhereAutomatically = clauseWhereAutomatically;
     }
 
-    public HashMap<String, ?> getParams() {
+    public HashMap<String, Object> getParams() {
         return sqlParams;
+    }
+
+    public void setPrefixParam(String prefixParam) {
+        this.prefixParam = prefixParam;
+    }
+
+    protected String generateParameterName(String input) {
+        return enablePrefixParam ? prefixParam.concat("_").concat(input) : input;
     }
 
     public Integer getLimit() {
@@ -186,16 +204,17 @@ public class SQLQueryDynamic {
     }
 
     public final void addCustomParam(String name, Object value) {
+        
         if (value instanceof String) {
-            sqlParams.put(name, ((String) value).toUpperCase());
+            sqlParams.put(generateParameterName(name), ((String) value).toUpperCase());
         } else if (value instanceof EnumIdentifiable) {
-            sqlParams.put(name, ((EnumIdentifiable<?>) value).getId());
+            sqlParams.put(generateParameterName(name), ((EnumIdentifiable<?>) value).getId());
         } else if (value instanceof Enum) {
-            sqlParams.put(name, ((Enum<?>) value).name());
+            sqlParams.put(generateParameterName(name), ((Enum<?>) value).name());
         } else if (value instanceof Boolean) {
-            sqlParams.put(name, ((Boolean) value));
+            sqlParams.put(generateParameterName(name), ((Boolean) value));
         } else {
-            sqlParams.put(name, value);
+            sqlParams.put(generateParameterName(name), value);
         }
     }
 
@@ -227,12 +246,12 @@ public class SQLQueryDynamic {
     protected void addCondition(Operator operator, String column, Object value, Condition condition, boolean forceCondition) {
         boolean apply = (forceCondition) ? true : checkToApply(value);
         if (apply) {
-            String parameterName = column + "_" + index;
+            String parameterName = generateParameterName(column + "_" + index);
             sqlWhere.append(hasToIncludeOperator() ? operator.toSentence() : "");
 
             if (value instanceof Date && condition == Condition.EQUAL) {
-                String parameterNameStart = parameterName + "_start";
-                String parameterNameEnd = parameterName + "_end";
+                String parameterNameStart = generateParameterName(parameterName + "_start");
+                String parameterNameEnd = generateParameterName(parameterName + "_end");
                 String dateStr = Utils.getDateFormat((Date) value, "yyyy-MM-dd");
 
                 sqlWhere.append(column);
@@ -282,7 +301,7 @@ public class SQLQueryDynamic {
 
     protected void addConditionLike(Operator operator, String column, String value, boolean percentAtStart, boolean percentAtEnd) {
         if (value != null && value.trim().compareTo("") != 0) {
-            String parameterName = column + "_" + index;
+            String parameterName = generateParameterName(column + "_" + index);
             sqlWhere.append(hasToIncludeOperator() ? operator.toSentence() : "");
             String pInicio = (percentAtStart) ? "'%'||" : "";
             String pFinal = (percentAtEnd) ? "||'%'" : "";
@@ -330,7 +349,7 @@ public class SQLQueryDynamic {
             internalSQL.append(i == 0 ? "(" : " AND (");
             for (int j = 0; j < columns.length; j++) {
                 countItems++;
-                String parameterName = columns[j] + "_" + index;
+                String parameterName = generateParameterName(columns[j] + "_" + index);
                 String pInicio = (percentAtStart) ? "'%'||" : "";
                 String pFinal = (percentAtEnd) ? "||'%'" : "";
 
@@ -432,7 +451,7 @@ public class SQLQueryDynamic {
             sqlWhere.append((values[0] instanceof String && enableUppercaseAutomatically) ? "UPPER(" + column + ")" : column);
             sqlWhere.append(" IN (");
             for (int i = 0; i < values.length; i++) {
-                String parameterName = column + "_" + index;
+                String parameterName = generateParameterName(column + "_" + index);
                 sqlWhere.append(i == 0 ? ":" : ",:").append(parameterName);
                 if (values[i] instanceof String) {
                     sqlParams.put(parameterName, ((String) values[i]).toUpperCase());
@@ -458,8 +477,8 @@ public class SQLQueryDynamic {
 
     protected void addConditionBetween(Operator operator, String column, Object value1, Object value2) {
         if (value1 != null && value2 != null) {
-            String parameterNameStart = column + "_" + index + "_start";
-            String parameterNameEnd = column + "_" + index + "_end";
+            String parameterNameStart = generateParameterName(column + "_" + index + "_start");
+            String parameterNameEnd = generateParameterName(column + "_" + index + "_end");
 
             sqlWhere.append(hasToIncludeOperator() ? operator.toSentence() : "");
             sqlWhere.append(column);
@@ -488,7 +507,7 @@ public class SQLQueryDynamic {
                 String leftParenthesis = (i == indexIzq) ? "(" : "";
                 String rightParenthesis = (i == indexDer) ? ")" : "";
                 if (values[i] != null) {
-                    String parameterName = column + "_" + index;
+                    String parameterName = generateParameterName(column + "_" + index);
                     sqlWhere.append(hasToIncludeOperator() ? ((i == 0) ? " AND " : " OR ") : "");
                     sqlWhere.append(leftParenthesis);
                     sqlWhere.append(column).append(" ");
@@ -692,7 +711,7 @@ public class SQLQueryDynamic {
                 generateConditions(groupConditions.get(i).getConditions());
             }
             this.sqlWhere.append(")");
-            
+
             //removing empty parentheses when condition groups cannot be applied 
             Utils.replaceAll(sqlWhere, " AND (())", "");
         }

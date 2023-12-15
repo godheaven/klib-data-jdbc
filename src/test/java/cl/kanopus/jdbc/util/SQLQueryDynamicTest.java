@@ -32,14 +32,14 @@ public class SQLQueryDynamicTest {
 
     @Test
     public void validateSQLBase() {
-        final String SQL = "SELECT * FROM cti_tbl_user";
+        final String SQL = "SELECT * FROM tbl_user";
         SQLQueryDynamic sqlQuery = new SQLQueryDynamic(SQL);
-        Assertions.assertTrue(SQL.equalsIgnoreCase(sqlQuery.getSQL()), "Validation sql");
+        Assertions.assertEquals(SQL, sqlQuery.getSQL());
     }
 
     @Test
     public void validateSQLBaseWithOnlyParams() {
-        final String SQL = "SELECT * FROM cti_tbl_user";
+        final String SQL = "SELECT * FROM tbl_user";
         SQLQueryDynamic sqlQuery = new SQLQueryDynamic(SQL);
         sqlQuery.setEnableUppercaseAutomatically(true);
         sqlQuery.addCustomParam("test", "value1");
@@ -53,7 +53,7 @@ public class SQLQueryDynamicTest {
         final String parameterName = "userid";
         final int parameterValue = 123;
 
-        SQLQueryDynamic sqlQuery = new SQLQueryDynamic("SELECT * FROM cti_tbl_user");
+        SQLQueryDynamic sqlQuery = new SQLQueryDynamic("SELECT * FROM tbl_user");
         sqlQuery.addCondition(parameterName, parameterValue, SQLQueryDynamic.Condition.EQUAL);
 
         Assertions.assertTrue(!sqlQuery.getParams().isEmpty(), "userid parameter had to be added.");
@@ -285,9 +285,9 @@ public class SQLQueryDynamicTest {
 
     @Test
     public void validateCustomCondition() {
-        SQLQueryDynamic sqlQuery = new SQLQueryDynamic("SELECT * FROM cti_tbl_user");
+        SQLQueryDynamic sqlQuery = new SQLQueryDynamic("SELECT * FROM tbl_user");
         sqlQuery.addCustomCondition("column IN(SELECT columnX FROM custom_table)");
-        Assertions.assertTrue("SELECT * FROM cti_tbl_user WHERE column IN(SELECT columnX FROM custom_table)".equalsIgnoreCase(sqlQuery.getSQL()), "Validation sql");
+        Assertions.assertTrue("SELECT * FROM tbl_user WHERE column IN(SELECT columnX FROM custom_table)".equalsIgnoreCase(sqlQuery.getSQL()), "Validation sql");
     }
 
     @Test
@@ -449,7 +449,7 @@ public class SQLQueryDynamicTest {
         query.addGroupCondition(groupCondition);
         Assertions.assertEquals("SELECT * FROM TABLE WHERE ((c2=:c2_0))", query.getSQL());
     }
-    
+
     @Test
     public void validateGroupConditionMultipleEmpty() {
         SQLQueryDynamic query = new SQLQueryDynamic("SELECT * FROM TABLE");
@@ -470,14 +470,14 @@ public class SQLQueryDynamicTest {
         GroupCondition groupCondition1 = new GroupCondition();
         groupCondition1.addCondition(c1);
         groupCondition1.addCondition(c2);
-        
+
         GroupCondition groupCondition2 = new GroupCondition();
         groupCondition2.addCondition(c1);
         groupCondition2.addCondition(c2);
 
         query.addGroupCondition(groupCondition1);
         query.addGroupCondition(groupCondition2);
-        
+
         Assertions.assertEquals("SELECT * FROM TABLE WHERE UPPER(c1)=:c1_0", query.getSQL());
     }
 
@@ -515,4 +515,18 @@ public class SQLQueryDynamicTest {
         Assertions.assertEquals("SELECT * FROM TABLE ORDER BY c2 DESC", query.getSQL());
     }
 
+    @Test
+    public void validateParamsWithAutomaticPrefix() {
+        final String SQL = "SELECT * FROM tbl_user";
+        SQLQueryDynamic query = new SQLQueryDynamic(SQL);
+        query.setEnablePrefixParam(true);
+        query.addCondition("column1", "one", SQLQueryDynamic.Condition.EQUAL);
+        Assertions.assertTrue(query.getParams().size() == 1);
+
+        for (String param : query.sqlParams.keySet()) {
+            Assertions.assertNotNull(param);
+        }
+
+         Assertions.assertNotEquals("SELECT * FROM tbl_user WHERE UPPER(column1)=:column1_0", query.getSQL());
+    }
 }

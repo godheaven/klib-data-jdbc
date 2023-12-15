@@ -19,9 +19,6 @@ public enum DataType implements EnumIdentifiable<String> {
             MatchMode.GREATER_THAN,
             MatchMode.GREATER_OR_EQUAL,
             MatchMode.NOT_EQUAL,
-            MatchMode.TEXT_CONTAINS,
-            MatchMode.TEXT_STARTS_WITH,
-            MatchMode.TEXT_ENDS_WITH,
             MatchMode.IN,
             MatchMode.BETWEEN
     ),
@@ -32,9 +29,6 @@ public enum DataType implements EnumIdentifiable<String> {
             MatchMode.GREATER_THAN,
             MatchMode.GREATER_OR_EQUAL,
             MatchMode.NOT_EQUAL,
-            MatchMode.TEXT_CONTAINS,
-            MatchMode.TEXT_STARTS_WITH,
-            MatchMode.TEXT_ENDS_WITH,
             MatchMode.BETWEEN
     );
 

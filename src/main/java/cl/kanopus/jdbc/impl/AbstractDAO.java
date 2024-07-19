@@ -288,7 +288,7 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
         return list;
     }
 
-    protected List<?> find(SQLQueryDynamic sqlQuery) throws DataException {
+    protected List find(SQLQueryDynamic sqlQuery) throws DataException {
         return find(sqlQuery, sqlQuery.getClazz());
     }
 
@@ -719,7 +719,7 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
         return value;
     }
 
-    private CustomEngine getCustom() {
+    protected CustomEngine getCustom() {
         if (null == getEngine()) {
             throw new DataException("Engine not supported");
         } else {

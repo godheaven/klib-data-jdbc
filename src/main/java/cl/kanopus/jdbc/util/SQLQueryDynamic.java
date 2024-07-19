@@ -1,9 +1,9 @@
 package cl.kanopus.jdbc.util;
 
+import cl.kanopus.common.data.enums.SortOrder;
 import cl.kanopus.common.enums.EnumIdentifiable;
 import cl.kanopus.common.util.Utils;
 import cl.kanopus.jdbc.entity.Mapping;
-import cl.kanopus.common.data.enums.SortOrder;
 import cl.kanopus.jdbc.util.extension.DataType;
 import cl.kanopus.jdbc.util.extension.GroupCondition;
 import cl.kanopus.jdbc.util.extension.OrderBy;
@@ -204,7 +204,7 @@ public class SQLQueryDynamic {
     }
 
     public final void addCustomParam(String name, Object value) {
-        
+
         if (value instanceof String) {
             sqlParams.put(generateParameterName(name), ((String) value).toUpperCase());
         } else if (value instanceof EnumIdentifiable) {
@@ -215,6 +215,12 @@ public class SQLQueryDynamic {
             sqlParams.put(generateParameterName(name), ((Boolean) value));
         } else {
             sqlParams.put(generateParameterName(name), value);
+        }
+    }
+
+    public void addCustomCondition(String customCondition, boolean apply) {
+        if (apply) {
+            addCustomCondition(customCondition);
         }
     }
 
@@ -493,6 +499,10 @@ public class SQLQueryDynamic {
         }
     }
 
+    public void addConditionJsonOr(String column, String expression, Object value) {
+        addConditionJsonOr(column, expression, new Object[]{value});
+    }
+
     public void addConditionJsonOr(String column, String expression, Object[] values) {
         boolean apply = checkToApply(values);
         if (apply) {
@@ -712,7 +722,7 @@ public class SQLQueryDynamic {
             }
             this.sqlWhere.append(")");
 
-            //removing empty parentheses when condition groups cannot be applied 
+            //removing empty parentheses when condition groups cannot be applied
             Utils.replaceAll(sqlWhere, " AND (())", "");
         }
 

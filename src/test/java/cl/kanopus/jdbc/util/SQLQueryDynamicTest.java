@@ -527,6 +527,6 @@ public class SQLQueryDynamicTest {
             Assertions.assertNotNull(param);
         }
 
-         Assertions.assertNotEquals("SELECT * FROM tbl_user WHERE UPPER(column1)=:column1_0", query.getSQL());
+        Assertions.assertNotEquals("SELECT * FROM tbl_user WHERE UPPER(column1)=:column1_0", query.getSQL());
     }
 }

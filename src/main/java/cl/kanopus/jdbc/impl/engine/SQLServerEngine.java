@@ -10,10 +10,9 @@ import java.util.regex.Pattern;
  */
 public class SQLServerEngine implements CustomEngine {
 
-    
     final Pattern pattern = Pattern.compile("([\\\\.a-zA-Z0-9_-]+)::date", Pattern.MULTILINE);
-    
-    private SQLServerEngine() {
+
+    protected SQLServerEngine() {
     }
 
     //Singleton Instance
@@ -45,8 +44,8 @@ public class SQLServerEngine implements CustomEngine {
 
     @Override
     public String prepareSQL2Engine(String sql) {
-        String newSql =  sql.replaceAll("\\|\\|", "+").replaceAll("count\\(\\*\\)", "count_big\\(\\*\\)");
-        
+        String newSql = sql.replaceAll("\\|\\|", "+").replaceAll("count\\(\\*\\)", "count_big\\(\\*\\)");
+
         Matcher matcher = pattern.matcher(newSql);
         return matcher.replaceAll("CAST($1 as date)");
     }

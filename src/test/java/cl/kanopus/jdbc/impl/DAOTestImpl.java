@@ -1,8 +1,8 @@
 package cl.kanopus.jdbc.impl;
 
-import cl.kanopus.jdbc.impl.engine.Engine;
 import cl.kanopus.jdbc.entity.Mapping;
 import cl.kanopus.jdbc.example.entity.TestData;
+import cl.kanopus.jdbc.impl.engine.Engine;
 import cl.kanopus.jdbc.util.SQLQueryDynamic;
 import java.util.HashMap;
 import java.util.List;
@@ -75,6 +75,11 @@ public class DAOTestImpl extends AbstractDAO<TestData, Long> implements DAOTest 
     @Override
     public List<?> find(SQLQueryDynamic sqlQuery) {
         return super.find(sqlQuery);
+    }
+
+    @Override
+    public List findAll(Class clazz) {
+        return super.findAll(clazz);
     }
 
 }

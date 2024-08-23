@@ -499,11 +499,11 @@ public class SQLQueryDynamic {
         }
     }
 
-    public void addConditionJsonOr(String column, String expression, Object value) {
-        addConditionJsonOr(column, expression, new Object[]{value});
+    public void addConditionJson(String column, String expression, Object value) {
+        addConditionJson(column, expression, new Object[]{value});
     }
 
-    public void addConditionJsonOr(String column, String expression, Object[] values) {
+    public void addConditionJson(String column, String expression, Object[] values) {
         boolean apply = checkToApply(values);
         if (apply) {
 
@@ -524,8 +524,7 @@ public class SQLQueryDynamic {
                     sqlWhere.append(expression.replace("${value}", values[i] + "")); //@TODO: debe ser escapado o preparar la sentencia
                     //sqlWhere.append(expression.replace("${value}", ":" + parameterName));
                     sqlWhere.append(rightParenthesis);
-                    sqlParams.put(parameterName,
-                            (values[i] instanceof String) ? (((String) values[i]).trim().toUpperCase()) : values[i]);
+                    //sqlParams.put(parameterName, (values[i] instanceof String) ? (((String) values[i]).trim().toUpperCase()) : values[i]);
                     index++;
                 }
             }

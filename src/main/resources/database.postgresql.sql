@@ -66,3 +66,10 @@ CREATE TABLE tmp_test_data_history
       REFERENCES tmp_test_data (pk_test_data) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE CASCADE
 );
 ALTER TABLE tmp_test_data_history OWNER TO user_test;
+
+
+CREATE TABLE tmp_test_data_empty
+(
+pk_test_data_empty integer NOT NULL
+);
+ALTER TABLE tmp_test_data_empty OWNER TO user_test;

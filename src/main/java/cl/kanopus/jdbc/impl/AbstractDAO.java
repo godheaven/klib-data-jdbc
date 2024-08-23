@@ -176,13 +176,7 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
 
     @Override
     public List<T> findAll() throws DataException {
-        Table table = getTableName(getGenericTypeClass());
-
-        SQLQueryDynamic sqlQuery = new SQLQueryDynamic(getGenericTypeClass());
-        if (!"[unassigned]".equals(table.defaultOrderBy())) {
-            sqlQuery.setOrderBy(table.defaultOrderBy(), SortOrder.ASCENDING);
-        }
-        return (List<T>) AbstractDAO.this.find(sqlQuery);
+        return findAll(getGenericTypeClass());
     }
 
     public List findAll(Class<? extends Mapping> aClass) throws DataException {
@@ -190,19 +184,12 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
     }
 
     public List findAll(Class<? extends Mapping> aClass, boolean loadAll) throws DataException {
-        //@TODO: implementar defaultOrderBy
-        List list;
-        try {
-            String sql = JdbcCache.sqlBase(aClass, loadAll);
-            list = getJdbcTemplate().query(sql, rowMapper(aClass, loadAll));
-        } catch (EmptyResultDataAccessException e) {
-            list = new ArrayList();
-        } catch (DataException de) {
-            throw de;
-        } catch (Exception ex) {
-            throw new DataException(ex.getMessage(), ex);
+        SQLQueryDynamic sqlQuery = new SQLQueryDynamic(aClass, loadAll);
+        Table table = getTableName(aClass, false);
+        if (table != null && !"[unassigned]".equals(table.defaultOrderBy())) {
+            sqlQuery.setOrderBy(table.defaultOrderBy(), SortOrder.ASCENDING);
         }
-        return list;
+        return AbstractDAO.this.find(sqlQuery);
     }
 
     @Override
@@ -612,8 +599,12 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
     }
 
     private Table getTableName(Class clazz) throws DataException {
+        return getTableName(clazz, true);
+    }
+
+    private Table getTableName(Class clazz, boolean required) throws DataException {
         Table table = (Table) clazz.getAnnotation(Table.class);
-        if (table == null) {
+        if (required && table == null) {
             throw new DataException("There is no annotation @Table into the class: " + clazz.getCanonicalName());
         }
         return table;

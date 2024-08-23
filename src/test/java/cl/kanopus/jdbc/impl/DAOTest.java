@@ -27,4 +27,6 @@ public interface DAOTest extends DAOInterface<TestData, Long> {
 
     List<?> find(SQLQueryDynamic sqlQuery);
 
+    List findAll(Class clazz);
+
 }

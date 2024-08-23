@@ -1,13 +1,14 @@
 package cl.kanopus.jdbc.impl;
 
+import cl.kanopus.common.data.enums.SortOrder;
 import cl.kanopus.jdbc.example.entity.TestData;
+import cl.kanopus.jdbc.example.entity.TestDataEmpty;
 import cl.kanopus.jdbc.example.entity.TestDataHistory;
 import cl.kanopus.jdbc.example.entity.TestType;
-import cl.kanopus.jdbc.example.entity.enums.Status;
 import cl.kanopus.jdbc.example.entity.enums.Color;
+import cl.kanopus.jdbc.example.entity.enums.Status;
 import cl.kanopus.jdbc.util.SQLQueryDynamic;
 import cl.kanopus.jdbc.util.SQLQueryDynamic.Condition;
-import cl.kanopus.common.data.enums.SortOrder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -56,6 +57,13 @@ public class AbstractDAOTest {
             Assertions.assertTrue(data.getColor() == Color.BLACK || data.getColor() == Color.RED);
         }
 
+    }
+
+    @Test
+    public void testFindAllEmpty() throws Exception {
+        List<TestDataEmpty> records = daoTest.findAll(TestDataEmpty.class);
+        Assertions.assertNotNull(records);
+        Assertions.assertTrue(records.isEmpty());
     }
 
     @Test

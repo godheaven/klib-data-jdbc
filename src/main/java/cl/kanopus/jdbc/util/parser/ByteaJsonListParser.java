@@ -19,7 +19,11 @@ public abstract class ByteaJsonListParser {
 
     public static <T extends List<T>> T parse(Class<T> type, String json) {
         Type type2 = TypeToken.getParameterized(ArrayList.class, type).getType();
-        return GsonUtils.custom.fromJson(json, type2);
+        T result = GsonUtils.custom.fromJson(json, type2);
+        if (result == null) {
+            result = (T) new ArrayList<T>();
+        }
+        return result;
     }
 
 }

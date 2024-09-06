@@ -13,7 +13,7 @@
         <property name="driverClass" value="org.postgresql.Driver" />
         <property name="jdbcUrl" value="jdbc:postgresql://localhost:5432/test?useSSL=false" />
         <property name="user" value="user_test" />
-        <property name="password" value="test" />
+        <property name="password" value="pass_test" />
 
         <!-- these are C3P0 properties -->
         <property name="acquireIncrement" value="3" />

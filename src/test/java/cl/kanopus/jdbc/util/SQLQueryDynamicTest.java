@@ -1,19 +1,24 @@
 package cl.kanopus.jdbc.util;
 
 import cl.kanopus.common.data.enums.SortOrder;
+import cl.kanopus.jdbc.entity.enums.JoinOperator;
+import cl.kanopus.jdbc.example.entity.TestDataEmpty;
+import cl.kanopus.jdbc.example.entity.TestDataHistory;
 import cl.kanopus.jdbc.util.extension.DataType;
 import cl.kanopus.jdbc.util.extension.GroupCondition;
 import cl.kanopus.jdbc.util.extension.OrderBy;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import org.junit.jupiter.api.Assertions;
+
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  *
@@ -22,41 +27,41 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  *
  */
 @ExtendWith(SpringExtension.class)
-public class SQLQueryDynamicTest {
+class SQLQueryDynamicTest {
 
     public enum EnumValue {
         ALFA,
         BETA,
         GAMA
-    };
+    }
 
     @Test
-    public void validateSQLBase() {
+    void validateSQLBase() {
         final String SQL = "SELECT * FROM tbl_user";
         SQLQueryDynamic sqlQuery = new SQLQueryDynamic(SQL);
         Assertions.assertEquals(SQL, sqlQuery.getSQL());
     }
 
     @Test
-    public void validateSQLBaseWithOnlyParams() {
+    void validateSQLBaseWithOnlyParams() {
         final String SQL = "SELECT * FROM tbl_user";
         SQLQueryDynamic sqlQuery = new SQLQueryDynamic(SQL);
         sqlQuery.setEnableUppercaseAutomatically(true);
         sqlQuery.addCustomParam("test", "value1");
         Assertions.assertEquals(SQL, sqlQuery.getSQL());
-        Assertions.assertTrue(sqlQuery.getParams().size() == 1);
+        Assertions.assertEquals(1, sqlQuery.getParams().size());
         Assertions.assertEquals("VALUE1", sqlQuery.getParams().get("test"));
     }
 
     @Test
-    public void validateConditionWhere() {
+    void validateConditionWhere() {
         final String parameterName = "userid";
         final int parameterValue = 123;
 
         SQLQueryDynamic sqlQuery = new SQLQueryDynamic("SELECT * FROM tbl_user");
         sqlQuery.addCondition(parameterName, parameterValue, SQLQueryDynamic.Condition.EQUAL);
 
-        Assertions.assertTrue(!sqlQuery.getParams().isEmpty(), "userid parameter had to be added.");
+        Assertions.assertFalse(sqlQuery.getParams().isEmpty(), "userid parameter had to be added.");
 
         for (String key : sqlQuery.getParams().keySet()) {
             Object value = sqlQuery.getParams().get(key);
@@ -67,32 +72,32 @@ public class SQLQueryDynamicTest {
     }
 
     @Test
-    public void validateConditionInWithIntegers() {
+    void validateConditionInWithIntegers() {
         final String parameterName = "field";
         final Integer[] parameterValues = {1, 2, 3};
 
         SQLQueryDynamic sqlQuery = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery.addConditionIn(parameterName, parameterValues);
 
-        Assertions.assertTrue(!sqlQuery.getParams().isEmpty(), "userid parameter had to be added.");
+        Assertions.assertFalse(sqlQuery.getParams().isEmpty(), "userid parameter had to be added.");
         Assertions.assertEquals("SELECT * FROM table WHERE field IN (:field_0,:field_1,:field_2)", sqlQuery.getSQL());
 
         for (int i = 0; i < parameterValues.length; i++) {
             String key = "field_" + i;
-            Assertions.assertTrue(parameterValues[i].equals(sqlQuery.getParams().get(key)));
+            Assertions.assertEquals(sqlQuery.getParams().get(key), parameterValues[i]);
         }
 
     }
 
     @Test
-    public void validateConditionInWithEnum() {
+    void validateConditionInWithEnum() {
         final String parameterName = "field";
-        final EnumValue parameterValues[] = {EnumValue.ALFA, EnumValue.BETA, EnumValue.GAMA};
+        final EnumValue[] parameterValues = {EnumValue.ALFA, EnumValue.BETA, EnumValue.GAMA};
 
         SQLQueryDynamic sqlQuery = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery.addConditionIn(parameterName, parameterValues);
 
-        Assertions.assertTrue(!sqlQuery.getParams().isEmpty(), "userid parameter had to be added.");
+        Assertions.assertFalse(sqlQuery.getParams().isEmpty(), "userid parameter had to be added.");
         Assertions.assertEquals("SELECT * FROM table WHERE field IN (:field_0,:field_1,:field_2)", sqlQuery.getSQL());
 
         for (int i = 0; i < parameterValues.length; i++) {
@@ -102,14 +107,14 @@ public class SQLQueryDynamicTest {
     }
 
     @Test
-    public void validateConditionInWithString() {
+    void validateConditionInWithString() {
         final String parameterName = "field";
-        final String parameterValues[] = {"a", "b", "c"};
+        final String[] parameterValues = {"a", "b", "c"};
 
         SQLQueryDynamic sqlQuery = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery.addConditionIn(parameterName, parameterValues);
 
-        Assertions.assertTrue(!sqlQuery.getParams().isEmpty(), "userid parameter had to be added.");
+        Assertions.assertFalse(sqlQuery.getParams().isEmpty(), "userid parameter had to be added.");
         Assertions.assertEquals("SELECT * FROM table WHERE UPPER(field) IN (:field_0,:field_1,:field_2)", sqlQuery.getSQL());
 
         for (int i = 0; i < parameterValues.length; i++) {
@@ -120,64 +125,64 @@ public class SQLQueryDynamicTest {
     }
 
     @Test
-    public void validateConditionEqualsDate() {
+    void validateConditionEqualsDate() {
         final String parameterName = "field";
         final Date date = new Date();
 
         SQLQueryDynamic sqlQuery = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery.addCondition(parameterName, date, SQLQueryDynamic.Condition.EQUAL);
-        Assertions.assertTrue(!sqlQuery.getParams().isEmpty());
+        Assertions.assertFalse(sqlQuery.getParams().isEmpty());
         Assertions.assertEquals("SELECT * FROM table WHERE field BETWEEN TO_TIMESTAMP(:field_0_start, 'YYYY-MM-DD') AND TO_TIMESTAMP(:field_0_end, 'YYYY-MM-DD HH24:MI:SS')", sqlQuery.getSQL());
     }
 
     @Test
-    public void validateConditionLocaltime() {
+    void validateConditionLocaltime() {
         final String parameterName = "field";
         final LocalDateTime date = LocalDateTime.now();
 
         SQLQueryDynamic sqlQuery = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery.addCondition(parameterName, date, SQLQueryDynamic.Condition.LESS_THAN);
-        Assertions.assertTrue(!sqlQuery.getParams().isEmpty());
+        Assertions.assertFalse(sqlQuery.getParams().isEmpty());
         Assertions.assertEquals("SELECT * FROM table WHERE field<TO_TIMESTAMP(:field_0, 'YYYY-MM-DD HH24:MI:SS')", sqlQuery.getSQL());
     }
 
     @Test
-    public void validateConditionLike() {
+    void validateConditionLike() {
         SQLQueryDynamic sqlQuery1 = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery1.addConditionLike("column1", "value1");
 
-        Assertions.assertTrue(!sqlQuery1.getParams().isEmpty(), "parameters should be added.");
+        Assertions.assertFalse(sqlQuery1.getParams().isEmpty(), "parameters should be added.");
         Assertions.assertEquals("SELECT * FROM table WHERE UPPER(column1) LIKE '%'||:column1_0||'%'", sqlQuery1.getSQL());
 
     }
 
     @Test
-    public void validateConditionBetween() {
+    void validateConditionBetween() {
         SQLQueryDynamic sqlQuery1 = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery1.addCondition("c1", "v1", SQLQueryDynamic.Condition.EQUAL);
         sqlQuery1.addConditionBetween("c2", "v2a", "v2b");
 
-        Assertions.assertTrue(!sqlQuery1.getParams().isEmpty(), "parameters should be added.");
+        Assertions.assertFalse(sqlQuery1.getParams().isEmpty(), "parameters should be added.");
         Assertions.assertEquals("SELECT * FROM table WHERE UPPER(c1)=:c1_0 AND c2 BETWEEN :c2_1_start AND :c2_1_end", sqlQuery1.getSQL());
     }
 
     @Test
-    public void validateConditionLikeSmart() {
+    void validateConditionLikeSmart() {
         SQLQueryDynamic sqlQuery1 = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery1.addConditionLikesSmart(new String[]{"usr_first_name", "usr_last_name"}, "AA:BB", ":");
-        Assertions.assertTrue(!sqlQuery1.getParams().isEmpty(), "parameters should be added.");
+        Assertions.assertFalse(sqlQuery1.getParams().isEmpty(), "parameters should be added.");
         Assertions.assertEquals(
                 "SELECT * FROM table WHERE ((UPPER(usr_first_name) LIKE '%'||:usr_first_name_0||'%' OR UPPER(usr_last_name) LIKE '%'||:usr_last_name_1||'%') AND (UPPER(usr_first_name) LIKE '%'||:usr_first_name_2||'%' OR UPPER(usr_last_name) LIKE '%'||:usr_last_name_3||'%'))",
                 sqlQuery1.getSQL());
 
         SQLQueryDynamic sqlQuery2 = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery2.addConditionLikesSmart(new String[]{"usr_first_name", "usr_last_name"}, "AA", ":");
-        Assertions.assertTrue(!sqlQuery2.getParams().isEmpty(), "parameters should be added.");
+        Assertions.assertFalse(sqlQuery2.getParams().isEmpty(), "parameters should be added.");
         Assertions.assertEquals("SELECT * FROM table WHERE ((UPPER(usr_first_name) LIKE '%'||:usr_first_name_0||'%' OR UPPER(usr_last_name) LIKE '%'||:usr_last_name_1||'%'))", sqlQuery2.getSQL());
 
         SQLQueryDynamic sqlQuery3 = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery3.addConditionLikesSmart(new String[]{"usr_first_name", "usr_last_name"}, "AA:BB:CC", ":");
-        Assertions.assertTrue(!sqlQuery3.getParams().isEmpty(), "parameters should be added.");
+        Assertions.assertFalse(sqlQuery3.getParams().isEmpty(), "parameters should be added.");
         Assertions.assertTrue("AA".equalsIgnoreCase((String) sqlQuery3.getParams().get("usr_first_name_0")));
         Assertions.assertTrue("AA".equalsIgnoreCase((String) sqlQuery3.getParams().get("usr_last_name_1")));
         Assertions.assertTrue("BB".equalsIgnoreCase((String) sqlQuery3.getParams().get("usr_first_name_2")));
@@ -190,7 +195,7 @@ public class SQLQueryDynamicTest {
 
         SQLQueryDynamic sqlQuery4 = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery4.addConditionLikesSmart(new String[]{"usr_first_name", "usr_last_name"}, ",  venegas", ",");
-        Assertions.assertTrue(!sqlQuery4.getParams().isEmpty(), "parameters should be added.");
+        Assertions.assertFalse(sqlQuery4.getParams().isEmpty(), "parameters should be added.");
         Assertions.assertEquals("SELECT * FROM table WHERE ((UPPER(usr_first_name) LIKE '%'||:usr_first_name_0||'%' OR UPPER(usr_last_name) LIKE '%'||:usr_last_name_1||'%'))", sqlQuery4.getSQL());
         Assertions.assertTrue("venegas".equalsIgnoreCase((String) sqlQuery4.getParams().get("usr_first_name_0")));
         Assertions.assertTrue("venegas".equalsIgnoreCase((String) sqlQuery4.getParams().get("usr_last_name_1")));
@@ -198,24 +203,24 @@ public class SQLQueryDynamicTest {
     }
 
     @Test
-    public void validateConditionOr() {
+    void validateConditionOr() {
         String[] columns = new String[]{"c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10"};
         Object[] values = new Object[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         SQLQueryDynamic.MatchMode[] matchModes = new SQLQueryDynamic.MatchMode[]{
-            SQLQueryDynamic.MatchMode.EQUAL,
-            SQLQueryDynamic.MatchMode.GREATER_OR_EQUAL,
-            SQLQueryDynamic.MatchMode.GREATER_THAN,
-            SQLQueryDynamic.MatchMode.IN,
-            SQLQueryDynamic.MatchMode.LESS_OR_EQUAL,
-            SQLQueryDynamic.MatchMode.LESS_THAN,
-            SQLQueryDynamic.MatchMode.NOT_EQUAL,
-            SQLQueryDynamic.MatchMode.TEXT_CONTAINS,
-            SQLQueryDynamic.MatchMode.TEXT_ENDS_WITH,
-            SQLQueryDynamic.MatchMode.TEXT_STARTS_WITH,};
+                SQLQueryDynamic.MatchMode.EQUAL,
+                SQLQueryDynamic.MatchMode.GREATER_OR_EQUAL,
+                SQLQueryDynamic.MatchMode.GREATER_THAN,
+                SQLQueryDynamic.MatchMode.IN,
+                SQLQueryDynamic.MatchMode.LESS_OR_EQUAL,
+                SQLQueryDynamic.MatchMode.LESS_THAN,
+                SQLQueryDynamic.MatchMode.NOT_EQUAL,
+                SQLQueryDynamic.MatchMode.TEXT_CONTAINS,
+                SQLQueryDynamic.MatchMode.TEXT_ENDS_WITH,
+                SQLQueryDynamic.MatchMode.TEXT_STARTS_WITH,};
 
         SQLQueryDynamic sqlQuery1 = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery1.addConditionOr(columns, values, matchModes);
-        Assertions.assertTrue(!sqlQuery1.getParams().isEmpty(), "parameters should be added.");
+        Assertions.assertFalse(sqlQuery1.getParams().isEmpty(), "parameters should be added.");
         Assertions.assertEquals(
                 "SELECT * FROM table WHERE (c1=:c1_0 OR c2>=:c2_1 OR c3>:c3_2 OR c4 IN (:c4_3) OR c5<=:c5_4 OR c6<:c6_5 OR c7<>:c7_6 OR UPPER(c8) LIKE '%'||:c8_7||'%' OR UPPER(c9) LIKE '%'||:c9_8 OR UPPER(c10) LIKE :c10_9||'%')",
                 sqlQuery1.getSQL());
@@ -223,7 +228,7 @@ public class SQLQueryDynamicTest {
         SQLQueryDynamic sqlQuery2 = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery2.addCondition("c0", "v0", SQLQueryDynamic.Condition.EQUAL);
         sqlQuery2.addConditionOr(columns, values, matchModes);
-        Assertions.assertTrue(!sqlQuery2.getParams().isEmpty(), "parameters should be added.");
+        Assertions.assertFalse(sqlQuery2.getParams().isEmpty(), "parameters should be added.");
         Assertions.assertEquals(
                 "SELECT * FROM table WHERE UPPER(c0)=:c0_0 AND (c1=:c1_1 OR c2>=:c2_2 OR c3>:c3_3 OR c4 IN (:c4_4) OR c5<=:c5_5 OR c6<:c6_6 OR c7<>:c7_7 OR UPPER(c8) LIKE '%'||:c8_8||'%' OR UPPER(c9) LIKE '%'||:c9_9 OR UPPER(c10) LIKE :c10_10||'%')",
                 sqlQuery2.getSQL());
@@ -231,7 +236,7 @@ public class SQLQueryDynamicTest {
         SQLQueryDynamic sqlQuery3 = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery3.addConditionOr(columns, values, matchModes);
         sqlQuery3.addCondition("c0", "v0", SQLQueryDynamic.Condition.EQUAL);
-        Assertions.assertTrue(!sqlQuery3.getParams().isEmpty(), "parameters should be added.");
+        Assertions.assertFalse(sqlQuery3.getParams().isEmpty(), "parameters should be added.");
         Assertions.assertEquals(
                 "SELECT * FROM table WHERE (c1=:c1_0 OR c2>=:c2_1 OR c3>:c3_2 OR c4 IN (:c4_3) OR c5<=:c5_4 OR c6<:c6_5 OR c7<>:c7_6 OR UPPER(c8) LIKE '%'||:c8_7||'%' OR UPPER(c9) LIKE '%'||:c9_8 OR UPPER(c10) LIKE :c10_9||'%') AND UPPER(c0)=:c0_10",
                 sqlQuery3.getSQL());
@@ -239,17 +244,17 @@ public class SQLQueryDynamicTest {
     }
 
     @Test
-    public void validateConditionOrWithNulls() {
+    void validateConditionOrWithNulls() {
         String[] columns = new String[]{"c1", "c2", "c3"};
 
         SQLQueryDynamic.MatchMode[] matchModes = new SQLQueryDynamic.MatchMode[]{
-            SQLQueryDynamic.MatchMode.EQUAL,
-            SQLQueryDynamic.MatchMode.GREATER_OR_EQUAL,
-            SQLQueryDynamic.MatchMode.NOT_EQUAL,};
+                SQLQueryDynamic.MatchMode.EQUAL,
+                SQLQueryDynamic.MatchMode.GREATER_OR_EQUAL,
+                SQLQueryDynamic.MatchMode.NOT_EQUAL,};
 
         SQLQueryDynamic sqlQuery1 = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery1.addConditionOr(columns, new Object[]{1, null, 3}, matchModes);
-        Assertions.assertTrue(!sqlQuery1.getParams().isEmpty(), "parameters should be added.");
+        Assertions.assertFalse(sqlQuery1.getParams().isEmpty(), "parameters should be added.");
         Assertions.assertEquals("SELECT * FROM table WHERE (c1=:c1_0 OR c3<>:c3_1)", sqlQuery1.getSQL());
 
         SQLQueryDynamic sqlQuery2 = new SQLQueryDynamic("SELECT * FROM table");
@@ -261,55 +266,55 @@ public class SQLQueryDynamicTest {
         sqlQuery3.addCondition("c0", "v0", SQLQueryDynamic.Condition.EQUAL);
         sqlQuery3.addConditionOr(columns, new Object[]{null, null, null}, matchModes);
 
-        Assertions.assertTrue(!sqlQuery3.getParams().isEmpty(), "parameters should be added.");
+        Assertions.assertFalse(sqlQuery3.getParams().isEmpty(), "parameters should be added.");
         Assertions.assertEquals("SELECT * FROM table WHERE UPPER(c0)=:c0_0", sqlQuery3.getSQL());
 
     }
 
     @Test
-    public void validateConditionOrBetween() {
+    void validateConditionOrBetween() {
         String[] columns = new String[]{"c1", "c2", "c3"};
         Object[] values = new Object[]{1, 2, new Object[]{50, 100}};
         SQLQueryDynamic.MatchMode[] matchModes = new SQLQueryDynamic.MatchMode[]{
-            SQLQueryDynamic.MatchMode.EQUAL,
-            SQLQueryDynamic.MatchMode.GREATER_OR_EQUAL,
-            SQLQueryDynamic.MatchMode.BETWEEN,};
+                SQLQueryDynamic.MatchMode.EQUAL,
+                SQLQueryDynamic.MatchMode.GREATER_OR_EQUAL,
+                SQLQueryDynamic.MatchMode.BETWEEN,};
 
         SQLQueryDynamic sqlQuery1 = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery1.addConditionOr(columns, values, matchModes);
 
-        Assertions.assertTrue(!sqlQuery1.getParams().isEmpty(), "parameters should be added.");
+        Assertions.assertFalse(sqlQuery1.getParams().isEmpty(), "parameters should be added.");
         Assertions.assertEquals("SELECT * FROM table WHERE (c1=:c1_0 OR c2>=:c2_1 OR c3 BETWEEN :c3_2_start AND :c3_2_end)", sqlQuery1.getSQL());
 
     }
 
     @Test
-    public void validateCustomCondition() {
+    void validateCustomCondition() {
         SQLQueryDynamic sqlQuery = new SQLQueryDynamic("SELECT * FROM tbl_user");
         sqlQuery.addCustomCondition("column IN(SELECT columnX FROM custom_table)");
         Assertions.assertTrue("SELECT * FROM tbl_user WHERE column IN(SELECT columnX FROM custom_table)".equalsIgnoreCase(sqlQuery.getSQL()), "Validation sql");
     }
 
     @Test
-    public void validateUppercaseDisabled() {
+    void validateUppercaseDisabled() {
         SQLQueryDynamic sqlQuery1 = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery1.setEnableUppercaseAutomatically(false);
         sqlQuery1.addConditionLike("column1", "value1");
 
-        Assertions.assertTrue(!sqlQuery1.getParams().isEmpty(), "parameters should be added.");
+        Assertions.assertFalse(sqlQuery1.getParams().isEmpty(), "parameters should be added.");
         Assertions.assertEquals("SELECT * FROM table WHERE column1 LIKE '%'||:column1_0||'%'", sqlQuery1.getSQL());
 
         SQLQueryDynamic sqlQuery2 = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery2.setEnableUppercaseAutomatically(true);
         sqlQuery2.addConditionLike("column1", "value1");
 
-        Assertions.assertTrue(!sqlQuery2.getParams().isEmpty(), "parameters should be added.");
+        Assertions.assertFalse(sqlQuery2.getParams().isEmpty(), "parameters should be added.");
         Assertions.assertEquals("SELECT * FROM table WHERE UPPER(column1) LIKE '%'||:column1_0||'%'", sqlQuery2.getSQL());
 
     }
 
     @Test
-    public void validateOrderByColumn() {
+    void validateOrderByColumn() {
         SQLQueryDynamic sqlQuery1 = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery1.setOrderBy("column1");
 
@@ -317,7 +322,7 @@ public class SQLQueryDynamicTest {
     }
 
     @Test
-    public void validateOrderByColumnDescending() {
+    void validateOrderByColumnDescending() {
         SQLQueryDynamic sqlQuery1 = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery1.setOrderBy("column1", SortOrder.DESCENDING);
 
@@ -325,7 +330,7 @@ public class SQLQueryDynamicTest {
     }
 
     @Test
-    public void validateOrderByColumnsAndSorted() {
+    void validateOrderByColumnsAndSorted() {
         SQLQueryDynamic sqlQuery1 = new SQLQueryDynamic("SELECT * FROM table");
         sqlQuery1.setOrderBy(new String[]{"column1", "column2"}, new SortOrder[]{SortOrder.ASCENDING, SortOrder.DESCENDING});
 
@@ -333,16 +338,13 @@ public class SQLQueryDynamicTest {
     }
 
     @Test
-    public void validateOrderByColumnsAndSortedInvalid() {
+    void validateOrderByColumnsAndSortedInvalid() {
         SQLQueryDynamic sqlQuery1 = new SQLQueryDynamic("SELECT * FROM table");
-        assertThrows(IllegalArgumentException.class, () -> {
-            sqlQuery1.setOrderBy(new String[]{"column1", "column2"}, new SortOrder[]{SortOrder.ASCENDING});
-        });
-
+        assertThrows(IllegalArgumentException.class, () -> sqlQuery1.setOrderBy(new String[]{"column1", "column2"}, new SortOrder[]{SortOrder.ASCENDING}));
     }
 
     @Test
-    public void validateSingleDateConditionWithCastxx() {
+    void validateSingleDateConditionWithCastxx() {
         SQLQueryDynamic query = new SQLQueryDynamic("SELECT * FROM TABLE");
         List<GroupCondition> groupConditionList = new ArrayList<>();
 
@@ -370,7 +372,7 @@ public class SQLQueryDynamicTest {
     }
 
     @Test
-    public void validateSingleDateConditionWithCast() {
+    void validateSingleDateConditionWithCast() {
         SQLQueryDynamic query = new SQLQueryDynamic("SELECT * FROM TABLE");
         List<GroupCondition> groupConditionList = new ArrayList<>();
         GroupCondition groupCondition = new GroupCondition();
@@ -390,7 +392,7 @@ public class SQLQueryDynamicTest {
     }
 
     @Test
-    public void validateBetweenDateConditionWithCast() {
+    void validateBetweenDateConditionWithCast() {
         SQLQueryDynamic query = new SQLQueryDynamic("SELECT * FROM TABLE");
         List<GroupCondition> groupConditionList = new ArrayList<>();
         GroupCondition groupCondition = new GroupCondition();
@@ -410,7 +412,7 @@ public class SQLQueryDynamicTest {
     }
 
     @Test
-    public void validateGroupConditionSingleEmpty() {
+    void validateGroupConditionSingleEmpty() {
         SQLQueryDynamic query = new SQLQueryDynamic("SELECT * FROM TABLE");
 
         GroupCondition.Condition condition = new GroupCondition.Condition();
@@ -427,7 +429,7 @@ public class SQLQueryDynamicTest {
     }
 
     @Test
-    public void validateGroupConditionMultipleOneEmpty() {
+    void validateGroupConditionMultipleOneEmpty() {
         SQLQueryDynamic query = new SQLQueryDynamic("SELECT * FROM TABLE");
 
         GroupCondition.Condition c1 = new GroupCondition.Condition();
@@ -451,7 +453,7 @@ public class SQLQueryDynamicTest {
     }
 
     @Test
-    public void validateGroupConditionMultipleEmpty() {
+    void validateGroupConditionMultipleEmpty() {
         SQLQueryDynamic query = new SQLQueryDynamic("SELECT * FROM TABLE");
         query.addCondition("c1", "Text", SQLQueryDynamic.Condition.EQUAL);
 
@@ -482,51 +484,63 @@ public class SQLQueryDynamicTest {
     }
 
     @Test
-    public void validateOrderByDefault() {
+    void validateOrderByDefault() {
         SQLQueryDynamic query = new SQLQueryDynamic("SELECT * FROM TABLE");
         List<OrderBy> orderByList = new ArrayList<>();
         OrderBy orderBy = new OrderBy();
         orderBy.setColumn("c1");
         orderBy.setSort(SortOrder.ASCENDING);
         orderByList.add(orderBy);
-        query.setOrderBy(new ArrayList<>(), orderByList);
+        query.setOrderBy(orderByList);
 
         Assertions.assertEquals("SELECT * FROM TABLE ORDER BY c1 ASC", query.getSQL());
     }
 
     @Test
-    public void validateOrderByCustom() {
+    void validateOrderByCustom() {
         SQLQueryDynamic query = new SQLQueryDynamic("SELECT * FROM TABLE");
-        List<OrderBy> orderByList = new ArrayList<>();
+
         List<OrderBy> customOrderByList = new ArrayList<>();
 
-        OrderBy orderBy = new OrderBy();
-        orderBy.setColumn("c1");
-        orderBy.setSort(SortOrder.ASCENDING);
 
         OrderBy custom = new OrderBy();
         custom.setColumn("c2");
         custom.setSort(SortOrder.DESCENDING);
 
-        orderByList.add(orderBy);
         customOrderByList.add(custom);
-        query.setOrderBy(customOrderByList, orderByList);
+        query.setOrderBy(customOrderByList);
 
         Assertions.assertEquals("SELECT * FROM TABLE ORDER BY c2 DESC", query.getSQL());
     }
 
     @Test
-    public void validateParamsWithAutomaticPrefix() {
+    void validateParamsWithAutomaticPrefix() {
         final String SQL = "SELECT * FROM tbl_user";
         SQLQueryDynamic query = new SQLQueryDynamic(SQL);
         query.setEnablePrefixParam(true);
         query.addCondition("column1", "one", SQLQueryDynamic.Condition.EQUAL);
-        Assertions.assertTrue(query.getParams().size() == 1);
+        Assertions.assertEquals(1, query.getParams().size());
 
         for (String param : query.sqlParams.keySet()) {
             Assertions.assertNotNull(param);
         }
 
         Assertions.assertNotEquals("SELECT * FROM tbl_user WHERE UPPER(column1)=:column1_0", query.getSQL());
+    }
+
+    @Test
+    void validateAddJoinTable() {
+        SQLQueryDynamic query = new SQLQueryDynamic(TestDataEmpty.class);
+        query.addJoinTable(JoinOperator.INNER_JOIN, TestDataHistory.class, "id");
+        System.out.println(query.getSQL());
+        Assertions.assertEquals("SELECT t1.pk_test_data_empty FROM tmp_test_data_empty t1 INNER JOIN tmp_test_data_history jt1 ON t1.pk_test_data_empty=jt1.pk_test_data_history", query.getSQL());
+    }
+
+    @Test
+    void validateAddJoinTableWithAlias() {
+        SQLQueryDynamic query = new SQLQueryDynamic(TestDataEmpty.class);
+        query.addJoinTable(JoinOperator.INNER_JOIN, "jtxxx1", TestDataHistory.class, "id");
+        System.out.println(query.getSQL());
+        Assertions.assertEquals("SELECT t1.pk_test_data_empty FROM tmp_test_data_empty t1 INNER JOIN tmp_test_data_history jtxxx1 ON t1.pk_test_data_empty=jtxxx1.pk_test_data_history", query.getSQL());
     }
 }

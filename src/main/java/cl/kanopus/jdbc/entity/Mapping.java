@@ -3,9 +3,8 @@ package cl.kanopus.jdbc.entity;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This abstract class must be implemented by all Java class that represents a
@@ -17,6 +16,12 @@ import org.slf4j.Logger;
 public abstract class Mapping implements Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Mapping.class);
+
+    protected void prePersist() {
+    }
+
+    protected void preUpdate() {
+    }
 
     @Override
     public String toString() {

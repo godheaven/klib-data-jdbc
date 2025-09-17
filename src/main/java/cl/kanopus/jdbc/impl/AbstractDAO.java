@@ -39,7 +39,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.postgresql.util.PGobject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameter;
@@ -63,6 +66,9 @@ import org.springframework.jdbc.core.simple.SimpleJdbcCall;
  */
 @SuppressWarnings("all")
 public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface<T, ID> {
+
+    protected static final Logger log = LoggerFactory.getLogger(AbstractDAO.class);
+    private static final String UNASSIGNED = "[unassigned]";
 
     enum Operation {
         UPDATE,
@@ -97,15 +103,15 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
     }
 
     @Override
-    public int deleteByID(ID id) throws DataException {
-        return deleteByID(getGenericTypeClass(), id);
+    public int deleteById(ID id) throws DataException {
+        return deleteById(getGenericTypeClass(), id);
     }
 
-    protected int deleteByID(Class clazz, ID key) throws DataException {
-        return deleteByID(clazz, isArray(key) ? ((Object[]) key) : new Object[]{key});
+    protected int deleteById(Class clazz, ID key) throws DataException {
+        return deleteById(clazz, isArray(key) ? ((Object[]) key) : new Object[]{key});
     }
 
-    protected int deleteByID(Class clazz, Object... keys) throws DataException {
+    protected int deleteById(Class clazz, Object... keys) throws DataException {
         Table table = getTableName(clazz);
         if (table.keys() == null || table.keys().length == 0) {
             throw new DataException("It is necessary to specify the primary keys for the entity: " + table.getClass().getCanonicalName());
@@ -124,6 +130,10 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
         }
 
         return update(sql.toString(), params);
+    }
+
+    protected int delete(SQLQueryDynamic query) throws DataException {
+        return update(query.getSQLDelete(), query.getParams());
     }
 
     protected <T> List<T> executeProcedure(String name, SqlParameter[] parameters, Map<String, Object> params, Class<T> returnType) {
@@ -179,24 +189,24 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
         return findAll(getGenericTypeClass());
     }
 
-    public List findAll(Class<? extends Mapping> aClass) throws DataException {
+    public <I extends Mapping> List<I> findAll(Class<I> aClass) throws DataException {
         return findAll(aClass, false);
     }
 
-    public List findAll(Class<? extends Mapping> aClass, boolean loadAll) throws DataException {
+    public <I extends Mapping> List<I> findAll(Class<I> aClass, boolean loadAll) throws DataException {
         SQLQueryDynamic sqlQuery = new SQLQueryDynamic(aClass, loadAll);
         Table table = getTableName(aClass, false);
-        if (table != null && !"[unassigned]".equals(table.defaultOrderBy())) {
+        if (table != null && !UNASSIGNED.equals(table.defaultOrderBy())) {
             sqlQuery.setOrderBy(table.defaultOrderBy(), SortOrder.ASCENDING);
         }
-        return AbstractDAO.this.find(sqlQuery);
+        return AbstractDAO.this.find(sqlQuery, aClass);
     }
 
     @Override
     public List<T> findTop(int limit, SortOrder sortOrder) throws DataException {
         Table table = getTableName(getGenericTypeClass());
         StringBuilder sql = new StringBuilder();
-        sql.append(JdbcCache.sqlBase(getGenericTypeClass()));
+        sql.append(JdbcCache.sqlBase(getGenericTypeClass()).getSql());
         if (table.keys() != null) {
             sql.append(" ORDER BY ");
             for (String s : table.keys()) {
@@ -237,6 +247,9 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
     protected List<T> find(String sql) throws DataException {
         List list;
         try {
+            if (log.isDebugEnabled()) {
+                log.debug("sql:" + sql);
+            }
             list = getJdbcTemplate().query(sql, rowMapper(getGenericTypeClass()));
         } catch (EmptyResultDataAccessException e) {
             list = new ArrayList();
@@ -247,6 +260,10 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
     protected List<T> find(String sql, HashMap<String, ?> params) throws DataException {
         List list;
         try {
+            if (log.isDebugEnabled()) {
+                log.debug("sql:" + sql);
+                log.debug("params:" + params.toString());
+            }
             list = getJdbcTemplate().query(sql, params, rowMapper(getGenericTypeClass()));
         } catch (EmptyResultDataAccessException e) {
             list = new ArrayList();
@@ -254,9 +271,13 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
         return list;
     }
 
-    protected List<?> find(String sql, HashMap<String, ?> params, Class<? extends Mapping> clazz) throws DataException {
+    protected <I extends Mapping> List<I> find(String sql, HashMap<String, ?> params, Class<I> clazz) throws DataException {
         List list;
         try {
+            if (log.isDebugEnabled()) {
+                log.debug("sql:" + sql);
+                log.debug("params:" + params.toString());
+            }
             list = getJdbcTemplate().query(sql, params, rowMapper(clazz));
         } catch (EmptyResultDataAccessException e) {
             list = new ArrayList();
@@ -264,9 +285,13 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
         return list;
     }
 
-    protected List<?> find(String sql, HashMap<String, ?> params, Class<? extends Mapping> clazz, int limit, int offset) throws DataException {
+    protected <I extends Mapping> List<I> find(String sql, HashMap<String, ?> params, Class<I> clazz, int limit, int offset) throws DataException {
         List list;
         try {
+            if (log.isDebugEnabled()) {
+                log.debug("sql:" + sql);
+                log.debug("params:" + params.toString());
+            }
             String sqlPagination = createSqlPagination(sql, limit, offset);
             list = getJdbcTemplate().query(sqlPagination, params, rowMapper(clazz));
         } catch (EmptyResultDataAccessException e) {
@@ -275,11 +300,15 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
         return list;
     }
 
-    protected List find(SQLQueryDynamic sqlQuery) throws DataException {
-        return find(sqlQuery, sqlQuery.getClazz());
+    protected List<T> find(SQLQueryDynamic sqlQuery) throws DataException {
+        return (List<T>) find(sqlQuery, sqlQuery.getClazz());
     }
 
-    protected List find(SQLQueryDynamic sqlQuery, Class<? extends Mapping> clazz) throws DataException {
+    protected <I extends Mapping> List<I> find(SQLQueryDynamic sqlQuery, Class<I> clazz) throws DataException {
+        if (log.isDebugEnabled()) {
+            log.debug("sql:" + sqlQuery.getSQL());
+            log.debug("params:" + sqlQuery.getParams());
+        }
         List records = getJdbcTemplate().query(createSqlPagination2Engine(sqlQuery), sqlQuery.getParams(), rowMapper(clazz, sqlQuery.isLoadAll()));
         if (sqlQuery.isLimited()) {
             long count = getJdbcTemplate().queryForObject(getCustom().prepareSQL2Engine(sqlQuery.getSQLCount()), sqlQuery.getParams(), Long.class);
@@ -290,7 +319,11 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
         return records;
     }
 
-    protected Paginator findPaginator(SQLQueryDynamic sqlQuery) throws DataException {
+    protected Paginator<T> findPaginator(SQLQueryDynamic sqlQuery) throws DataException {
+        return (Paginator<T>) findPaginator(sqlQuery, sqlQuery.getClazz());
+    }
+
+    protected <I extends Mapping> Paginator<I> findPaginator(SQLQueryDynamic sqlQuery, Class<I> clazz) throws DataException {
         List records = find(sqlQuery, sqlQuery.getClazz());
         Paginator paginator = new Paginator();
         paginator.setRecords(records);
@@ -373,42 +406,69 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
     @Override
     public long generateID() throws DataException {
         Table table = getTableName(getGenericTypeClass());
-        if (table.sequence() == null) {
+        String sequence = prepareSequence(table);
+        if (sequence == null) {
             throw new DataException("It is necessary to specify the sequence related to the entity:");
         }
-
-        String customSql = getCustom().createSqlNextval(table.sequence());
+        String customSql = getCustom().createSqlNextval(sequence);
         return queryForLong(customSql);
     }
 
     protected long generateAnyID(Class<? extends Mapping> clazz) throws DataException {
         Table table = getTableName(clazz);
-        if (table.sequence() == null) {
+        String sequence = prepareSequence(table);
+        if (sequence == null) {
             throw new DataException("It is necessary to specify the sequence related to the entity:");
         }
-        String customSql = getCustom().createSqlNextval(table.sequence());
+        String customSql = getCustom().createSqlNextval(sequence);
         return queryForLong(customSql);
     }
 
-    @Override
-    public T getByID(ID id) throws DataException {
-        return (T) getByID(getGenericTypeClass(), id);
+    private String prepareSequence(Table table) {
+        return (isNullOrUnassigned(table.sequence()) && !isNullOrUnassigned(table.keys()) && table.keys().length == 1)
+                ? String.format("%s_%s_seq", table.name(), table.keys()[0])
+                : table.sequence();
+    }
+
+    private boolean isNullOrUnassigned(Object property) {
+        return (property == null || UNASSIGNED.equals(property));
+    }
+
+    protected boolean exists(SQLQueryDynamic query) throws DataException {
+        int count = queryForInteger(query.getSQLCount(), query.getParams());
+        return (count > 0);
     }
 
     @Override
-    public T getByID(ID key, boolean loadAll) throws DataException {
-        return (T) getByID(getGenericTypeClass(), loadAll, isArray(key) ? ((Object[]) key) : new Object[]{key});
+    public boolean existsById(ID id) throws DataException {
+        Mapping obj = getById(getGenericTypeClass(), Boolean.FALSE, new Object[]{id});
+        return obj != null;
     }
 
-    protected <T extends Mapping> T getByID(Class<T> clazz, ID key) throws DataException {
-        return getByID(clazz, isArray(key) ? ((Object[]) key) : new Object[]{key});
+    @Override
+    public Optional<T> findById(ID id) throws DataException {
+        return Optional.ofNullable((T) getById(getGenericTypeClass(), id));
     }
 
-    protected <T extends Mapping> T getByID(Class<T> clazz, Object... keys) throws DataException {
-        return getByID(clazz, false, keys);
+    @Override
+    public T getById(ID id) throws DataException {
+        return (T) getById(getGenericTypeClass(), id);
     }
 
-    protected <T extends Mapping> T getByID(Class<T> clazz, boolean loadAll, Object... keys) throws DataException {
+    @Override
+    public T getById(ID key, boolean loadAll) throws DataException {
+        return (T) getById(getGenericTypeClass(), loadAll, isArray(key) ? ((Object[]) key) : new Object[]{key});
+    }
+
+    protected <T extends Mapping> T getById(Class<T> clazz, ID key) throws DataException {
+        return getById(clazz, isArray(key) ? ((Object[]) key) : new Object[]{key});
+    }
+
+    protected <T extends Mapping> T getById(Class<T> clazz, Object... keys) throws DataException {
+        return getById(clazz, false, keys);
+    }
+
+    protected <T extends Mapping> T getById(Class<T> clazz, boolean loadAll, Object... keys) throws DataException {
         Table table = getTableName(clazz);
         if (table.keys() == null || table.keys().length == 0) {
             throw new DataException("It is necessary to specify the primary keys for the entity: " + table.getClass().getCanonicalName());
@@ -418,7 +478,7 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
         }
 
         StringBuilder sql = new StringBuilder();
-        sql.append(JdbcCache.sqlBase(clazz, true)).append(" WHERE ");
+        sql.append(JdbcCache.sqlBase(clazz, true).getSql()).append(" WHERE ");
         HashMap<String, Object> params = new HashMap<>();
         for (int i = 0; i < keys.length; i++) {
             params.put(table.keys()[i], keys[i]);
@@ -434,8 +494,9 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
     }
 
     @Override
-    public void persist(T object) throws DataException {
+    public T persist(T object) throws DataException {
         persistAny(object);
+        return object;
     }
 
     protected void persistAny(Mapping object) throws DataException {
@@ -507,6 +568,11 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
         return object;
     }
 
+    protected <I extends Mapping> Optional<I> queryForObjectOptional(SQLQueryDynamic sqlQuery) throws DataException {
+        I result = queryForObject(createSqlPagination2Engine(sqlQuery), sqlQuery.getParams(), (Class<I>) sqlQuery.getClazz());
+        return Optional.ofNullable(result);
+    }
+
     private T queryForObject(String sql, HashMap<String, ?> params, AbstractRowMapper<T> rowMapper) throws DataException {
         T mapping;
         try {
@@ -542,6 +608,10 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
     protected <I extends Mapping> I queryForObject(String sql, HashMap<String, ?> params, Class<I> clazz, boolean loadAll) throws DataException {
         Object object;
         try {
+            if (log.isDebugEnabled()) {
+                log.debug("sql:" + sql);
+                log.debug("params:" + params);
+            }
             object = getJdbcTemplate().queryForObject(sql, params, rowMapper(clazz, loadAll));
         } catch (EmptyResultDataAccessException e) {
             object = null;
@@ -558,16 +628,19 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
     }
 
     protected int update(String sql, HashMap<String, ?> params) throws DataException {
+        if (log.isDebugEnabled()) {
+            log.debug("sql:" + sql);
+            log.debug("params:" + params.toString());
+        }
         return getJdbcTemplate().update(sql, params);
     }
 
     @Override
-    public int update(T object) throws DataException {
+    public T update(T object) throws DataException {
         return updateAny(object);
     }
 
-    protected int updateAny(Mapping object) throws DataException {
-
+    protected <I extends Mapping> I updateAny(I object) throws DataException {
         Table table = getTableName(object.getClass());
         if (table.keys() == null || table.keys().length == 0) {
             throw new DataException("It is necessary to specify the primary keys for the entity: " + table.getClass().getCanonicalName());
@@ -595,7 +668,8 @@ public abstract class AbstractDAO<T extends Mapping, ID> implements DAOInterface
             sql.append(key).append("=:").append(key);
             firstElement = false;
         }
-        return update(sql.toString(), params);
+        update(sql.toString(), params);
+        return object;
     }
 
     private Table getTableName(Class clazz) throws DataException {

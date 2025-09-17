@@ -10,6 +10,7 @@ import cl.kanopus.jdbc.example.entity.enums.Status;
 import cl.kanopus.jdbc.util.parser.EnumParser;
 import cl.kanopus.jdbc.util.parser.JsonListParser;
 import cl.kanopus.jdbc.util.parser.JsonParser;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -18,31 +19,6 @@ import java.util.List;
 /**
  * @author Pablo Diaz Saavedra
  * @email pabloandres.diazsaavedra@gmail.com
- *
- * <pre>
- * CREATE TABLE tmp_test_data
- * (
- *    pk_test_data NUMBER NOT NULL,
- *    td_system_id NUMBER NOT NULL,
- *    td_login_id VARCHAR2(10 CHAR) NOT NULL,
- *    td_date timestamp without time zone NOT NULL,
- *    td_local_date date NOT NULL,
- *    td_local_date_time timestamp without time zone NOT NULL,
- *    td_text VARCHAR2(100 CHAR) NOT NULL,
- *    td_status VARCHAR2(10 CHAR) NOT NULL,
- *    td_color_id NUMBER,
- *    td_color_json JSONB,
- *    td_data_json JSONB,
- *    td_list_json JSONB,
- *    fk_test_type NUMBER NOT NULL
- *
- * );
- *
- * -- Primary key
- * ALTER TABLE tmp_test_data ADD CONSTRAINT PK_TEST PRIMARY KEY (test_id);
- *
- * --sequence CREATE SEQUENCE seq_test_data INCREMENT BY 1 NOCACHE NOCYCLE;
- * </pre>
  */
 @Table(name = "tmp_test_data", sequence = "tmp_test_data_pk_test_data_seq", keys = {"pk_test_data"})
 public class TestData extends Mapping {

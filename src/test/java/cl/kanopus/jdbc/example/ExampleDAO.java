@@ -1,16 +1,17 @@
 package cl.kanopus.jdbc.example;
 
+import cl.kanopus.common.data.Paginator;
+import cl.kanopus.common.data.Searcher;
 import cl.kanopus.jdbc.DAOInterface;
 import cl.kanopus.jdbc.example.entity.TestData;
 import cl.kanopus.jdbc.exception.DataException;
-import cl.kanopus.common.data.Paginator;
 import cl.kanopus.jdbc.util.QueryIterator;
 import cl.kanopus.jdbc.util.SQLQueryDynamic;
-import cl.kanopus.common.data.Searcher;
+import org.springframework.stereotype.Repository;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import org.springframework.stereotype.Repository;
 
 /**
  *
@@ -43,15 +44,14 @@ public class ExampleDAO extends AbstractBaseDAO<TestData, Long> implements DAOIn
      */
     public Iterator<TestData> findWithIterator() {
         String sql = "SELECT * FROM tmp_test_data";
-        final HashMap params = new HashMap();
+        final HashMap<String, String> params = new HashMap<>();
 
-        Iterator<TestData> iterator = new QueryIterator<TestData>(3) {
+        return new QueryIterator<TestData>(3) {
             @Override
             public List<TestData> getData(int limit, int offset) {
                 return find(sql, params, TestData.class, limit, offset);
             }
         };
-        return iterator;
 
     }
 
@@ -60,8 +60,8 @@ public class ExampleDAO extends AbstractBaseDAO<TestData, Long> implements DAOIn
         query.setOrderBy("pk_test_data");
         return super.findQueryIterator(query);
     }
-    
-    
+
+
     public Iterator<TestData> findQueryIteratorWithSQLQueryDynamicDefaultLimit5() {
         SQLQueryDynamic query = new SQLQueryDynamic(TestData.class);
         query.setOrderBy("pk_test_data");

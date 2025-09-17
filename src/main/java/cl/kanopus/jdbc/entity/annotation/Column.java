@@ -32,4 +32,6 @@ public @interface Column {
 
     int length() default 0;
 
+    boolean nullable() default false;
+
 }

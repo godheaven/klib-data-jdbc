@@ -17,9 +17,9 @@ public interface DAOTest extends DAOInterface<TestData, Long> {
 
     List<TestData> find(String sql, HashMap<String, ?> params);
 
-    List<?> find(String sql, HashMap<String, ?> params, Class<? extends Mapping> clazz);
+    <I extends Mapping> List<I> find(String sql, HashMap<String, ?> params, Class<I> clazz);
 
-    List<?> find(String sql, HashMap<String, ?> params, Class<? extends Mapping> clazz, int limit, int offset);
+    <I extends Mapping> List<I> find(String sql, HashMap<String, ?> params, Class<I> clazz, int limit, int offset);
 
     List<String> findStrings(String sql, HashMap<String, ?> params);
 

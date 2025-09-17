@@ -53,12 +53,12 @@ public class DAOTestImpl extends AbstractDAO<TestData, Long> implements DAOTest 
     }
 
     @Override
-    public List find(String sql, HashMap<String, ?> params, Class<? extends Mapping> clazz) {
+    public <I extends Mapping> List<I> find(String sql, HashMap<String, ?> params, Class<I> clazz) {
         return super.find(sql, params, clazz);
     }
 
     @Override
-    public List<?> find(String sql, HashMap<String, ?> params, Class<? extends Mapping> clazz, int limit, int offset) {
+    public <I extends Mapping> List<I> find(String sql, HashMap<String, ?> params, Class<I> clazz, int limit, int offset) {
         return super.find(sql, params, clazz, limit, offset);
     }
 
@@ -73,7 +73,7 @@ public class DAOTestImpl extends AbstractDAO<TestData, Long> implements DAOTest 
     }
 
     @Override
-    public List<?> find(SQLQueryDynamic sqlQuery) {
+    public List<TestData> find(SQLQueryDynamic sqlQuery) {
         return super.find(sqlQuery);
     }
 

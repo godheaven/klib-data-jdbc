@@ -4,29 +4,29 @@ import cl.kanopus.common.util.CryptographyUtils;
 import cl.kanopus.common.util.Utils;
 import cl.kanopus.jdbc.entity.Mapping;
 import cl.kanopus.jdbc.entity.annotation.Column;
+import cl.kanopus.jdbc.entity.annotation.ColumnGroup;
+import cl.kanopus.jdbc.entity.annotation.JoinTable;
 import cl.kanopus.jdbc.entity.annotation.Table;
+import cl.kanopus.jdbc.entity.annotation.View;
 import cl.kanopus.jdbc.entity.mapper.AbstractRowMapper;
+import cl.kanopus.jdbc.util.parser.ByteaJsonListParser;
+import cl.kanopus.jdbc.util.parser.ByteaJsonParser;
 import cl.kanopus.jdbc.util.parser.EnumParser;
+import cl.kanopus.jdbc.util.parser.JsonListParser;
+import cl.kanopus.jdbc.util.parser.JsonParser;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
-import cl.kanopus.jdbc.entity.annotation.ColumnGroup;
-import cl.kanopus.jdbc.entity.annotation.JoinTable;
-import cl.kanopus.jdbc.entity.annotation.View;
-import cl.kanopus.jdbc.util.parser.ByteaJsonListParser;
-import cl.kanopus.jdbc.util.parser.ByteaJsonParser;
-import cl.kanopus.jdbc.util.parser.JsonListParser;
-import cl.kanopus.jdbc.util.parser.JsonParser;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.crypto.BadPaddingException;
 
 /**
@@ -46,7 +46,7 @@ public class JdbcCache {
 
     private static final Map<String, Map<String, String>> translationMapCache = new HashMap<>();
     private static final Map<String, AbstractRowMapper> rowMapperCache = new HashMap<>();
-    private static final Map<String, String> sqlBaseCache = new HashMap<>();
+    private static final Map<String, SqlBase> sqlBaseCache = new HashMap<>();
 
     private JdbcCache() {
         throw new IllegalStateException("Utility class");
@@ -56,28 +56,50 @@ public class JdbcCache {
         return canonicalName + (loadAll ? "_ALL" : "_LAZY");
     }
 
-    public static String sqlBase(Class<? extends Mapping> clazz) {
+    public static SqlBase sqlBase(Class<? extends Mapping> clazz) {
         return sqlBase(clazz, false);
     }
 
-    public static String sqlBase(Class<? extends Mapping> clazz, boolean loadAll) {
+    public static SqlBase sqlBase(Class<? extends Mapping> clazz, boolean loadAll) {
         String key = geyKeyCache(clazz.getCanonicalName(), loadAll);
-        String sql = sqlBaseCache.get(key);
-        if (sql == null) {
+        SqlBase sqlBase = sqlBaseCache.get(key);
+        if (sqlBase == null) {
             View view = (View) clazz.getDeclaredAnnotation(View.class);
             if (view != null) {
                 checkAnnotationNotSupported(clazz);
-                sql = view.value();
-                sqlBaseCache.put(key, sql);
+
+                sqlBase = new SqlBase(null, view.value(), new HashMap<>());
+                sqlBaseCache.put(key, sqlBase);
             } else {
                 SQLCreator creator = new SQLCreator();
-                sqlBase(null, null, clazz, loadAll, creator);
-                sql = creator.generate();
-                sqlBaseCache.put(key, sql);
-            }
+                prepareCreator(null, null, clazz, loadAll, creator);
 
+                sqlBase = new SqlBase(creator.getTable(), creator.generate(), creator.getAliasMap());
+                sqlBaseCache.put(key, sqlBase);
+            }
         }
-        return sql;
+        return sqlBase;
+    }
+
+    public static class SqlBase {
+
+        private final String sql;
+        private final Map<String, String> aliasMap;
+
+        public SqlBase(String tableBase, String sql, Map<String, String> aliasMap) {
+
+            this.sql = sql;
+            this.aliasMap = aliasMap;
+        }
+
+        public String getSql() {
+            return sql;
+        }
+
+        public Map<String, String> getAliasMap() {
+            return aliasMap;
+        }
+
     }
 
     public static AbstractRowMapper rowMapper(Class clazz, boolean loadAll) {
@@ -190,28 +212,33 @@ public class JdbcCache {
     public static Map<String, String> translationMap(Class<? extends Mapping> clazz) {
         Map<String, String> translationMap = translationMapCache.get(clazz.getCanonicalName());
         if (translationMap == null || translationMap.isEmpty()) {
+            Table table = (Table) clazz.getDeclaredAnnotation(Table.class);
             translationMap = new HashMap<>();
-            translationMapExtract(clazz, translationMap, "");
+            translationMapExtract(clazz, translationMap, "", table);
             translationMapCache.put(clazz.getCanonicalName(), translationMap);
         }
         return translationMap;
 
     }
 
-    private static void translationMapExtract(Class clazz, Map<String, String> translationMap, String prefix) {
+    private static void translationMapExtract(Class clazz, Map<String, String> translationMap, String prefix, Table parent) {
+
+        Table table = (Table) clazz.getDeclaredAnnotation(Table.class);
+        String tableName = (table != null) ? table.name() : parent.name();
 
         for (Field field : clazz.getDeclaredFields()) {
             Column column = field.getAnnotation(Column.class);
             if (column != null) {
-                translationMap.put(prefix + field.getName(), column.name());
+
+                translationMap.put(prefix + field.getName(), tableName + "." + column.name());
             } else {
                 ColumnGroup columnMapping = field.getAnnotation(ColumnGroup.class);
                 if (columnMapping != null) {
-                    translationMapExtract(columnMapping.result(), translationMap, prefix + field.getName() + ".");
+                    translationMapExtract(columnMapping.result(), translationMap, prefix + field.getName() + ".", (table != null) ? table : parent);
                 } else {
                     JoinTable joinTable = field.getAnnotation(JoinTable.class);
                     if (joinTable != null) {
-                        translationMapExtract(joinTable.table(), translationMap, prefix + field.getName() + ".");
+                        translationMapExtract(joinTable.table(), translationMap, prefix + field.getName() + ".", (table != null) ? table : parent);
                     }
                 }
             }
@@ -223,7 +250,7 @@ public class JdbcCache {
         return (!Utils.isNullOrEmpty(str)) ? str.matches("[0-9]+") : false;
     }
 
-    private static void sqlBase(Table parent, JoinTable joined, Class currentClazz, boolean loadAll, SQLCreator creator) {
+    private static void prepareCreator(Table parent, JoinTable joined, Class currentClazz, boolean loadAll, SQLCreator creator) {
 
         String tableName = null;
         Table table = (Table) currentClazz.getDeclaredAnnotation(Table.class);
@@ -247,11 +274,11 @@ public class JdbcCache {
             } else {
                 JoinTable joinTable = field.getAnnotation(JoinTable.class);
                 if (joinTable != null && (!joinTable.lazy() || loadAll)) {
-                    sqlBase(table, joinTable, joinTable.table(), loadAll, creator);
+                    prepareCreator(table, joinTable, joinTable.table(), loadAll, creator);
                 } else {
                     ColumnGroup columnGroup = field.getAnnotation(ColumnGroup.class);
                     if (columnGroup != null) {
-                        sqlBase(table, joinTable, columnGroup.result(), loadAll, creator);
+                        prepareCreator(table, joinTable, columnGroup.result(), loadAll, creator);
                     }
                 }
 
@@ -316,6 +343,14 @@ public class JdbcCache {
             }
 
             return sql.toString();
+        }
+
+        public String getTable() {
+            return table;
+        }
+
+        public Map<String, String> getAliasMap() {
+            return aliasMap;
         }
 
         private String generateAlias(String name) {

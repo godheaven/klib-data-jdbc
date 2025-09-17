@@ -1,5 +1,16 @@
 
-![Logo](https://www.kanopus.cl/admin/javax.faces.resource/images/logo-gray.png.xhtml?ln=paradise-layout)
+![Logo](https://www.kanopus.cl/admin/javax.faces.resource/images/logo-grey.png.xhtml?ln=paradise-layout)
+
+
+# TODO:
+1. calcular el nombre de la secuencia automaticamente, ejemplo: {table_name}_{column}_seq
+2. validar @Column  nullable = false
+
+3. evaluar la implementacion de @Id y @GeneratedValue(strategy = GenerationType.IDENTITY)
+4. Actualizar @JoinTable para que calcule automaticamente la propiedad "table"
+5. Implementar @Id para reemplazar @Table(keys)
+6. Implementar existsByID, ya que actualmente se implemento no optimizado
+
 
 
 # klib-data-jdbc
@@ -15,8 +26,10 @@ Currently this library has support for the following database engines:
 
 ## Features
 - Automatic SQL generation based on annotations
+- Automatic data encryption by simply adding encrypted=true
 - SQL is prepared in advance avoiding SQL injection
 - Mapping of different data types such as String, Long, Integer, Enums, Json, LocalDateTime and others.
+  A single converter for different data types, avoiding unnecessary code.
 - It is possible to define relationships between different tables using @JoinTable
 - It is possible to build complex queries using SQLQueryDynamic
 - It is possible to group columns of an entity with @ColumnGroup for a better understanding
@@ -395,15 +408,11 @@ public class ExampleService {
 
 ## License
 
-This is free software and I hope you enjoy it.
+This software is licensed under the Apache License, Version 2.0. See the LICENSE file for details.
+I hope you enjoy it.
 
-[![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
-
-
-
-
+[![Apache License, Version 2.0](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg)](https://opensource.org/license/apache-2-0)
 
 ## Support
 
-For support, email pabloandres.diazsaavedra@gmail.com
-
+For support, email soporte@kanopus.cl

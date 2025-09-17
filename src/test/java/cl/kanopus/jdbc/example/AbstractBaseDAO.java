@@ -15,10 +15,10 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
  *
  * @author Pablo Diaz Saavedra
  * @param <T>
- * @param <ID>
+ * @param <I>
  * @email pabloandres.diazsaavedra@gmail.com
  */
-public abstract class AbstractBaseDAO<T extends Mapping, ID> extends AbstractDAO<T, ID> {
+public abstract class AbstractBaseDAO<T extends Mapping, I> extends AbstractDAO<T, I> {
 
     @Autowired
     private NamedParameterJdbcTemplate jdbcTemplate;

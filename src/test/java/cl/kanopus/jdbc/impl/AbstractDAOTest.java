@@ -9,11 +9,6 @@ import cl.kanopus.jdbc.example.entity.enums.Color;
 import cl.kanopus.jdbc.example.entity.enums.Status;
 import cl.kanopus.jdbc.util.SQLQueryDynamic;
 import cl.kanopus.jdbc.util.SQLQueryDynamic.Condition;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,31 +16,36 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+
 @ContextConfiguration(locations = "classpath:applicationContext.xml")
 @ExtendWith(SpringExtension.class)
-public class AbstractDAOTest {
+class AbstractDAOTest {
 
     @Autowired
     private DAOTest daoTest;
 
     @Test
-    public void testDeleteByID_long() throws Exception {
+    void testDeleteByID_long() throws Exception {
         long id = 0L;
         int expResult = 0;
-        int result = daoTest.deleteByID(id);
+        int result = daoTest.deleteById(id);
         Assertions.assertEquals(expResult, result);
     }
 
     @Test
-    public void testFindAll() throws Exception {
+    void testFindAll() throws Exception {
 
         List<TestData> records = daoTest.findAll();
         Assertions.assertNotNull(records);
-        Assertions.assertTrue(records.size() >= 0);
         for (TestData data : records) {
-            Assertions.assertNotNull(data.getId());
+            Assertions.assertNotEquals(0, data.getId());
             Assertions.assertNotNull(data.getLoginId());
-            Assertions.assertNotNull(data.getSystemId());
+            Assertions.assertNotEquals(0, data.getSystemId());
             Assertions.assertNotNull(data.getStatus());
             Assertions.assertNotNull(data.getDate());
             Assertions.assertNotNull(data.getLocalDate());
@@ -60,24 +60,24 @@ public class AbstractDAOTest {
     }
 
     @Test
-    public void testFindAllEmpty() throws Exception {
+    void testFindAllEmpty() {
         List<TestDataEmpty> records = daoTest.findAll(TestDataEmpty.class);
         Assertions.assertNotNull(records);
         Assertions.assertTrue(records.isEmpty());
     }
 
     @Test
-    public void testFindTop() throws Exception {
+    void testFindTop() throws Exception {
         int limit = 2;
         SortOrder sortOrder = SortOrder.ASCENDING;
 
         List<TestData> records = daoTest.findTop(limit, sortOrder);
         Assertions.assertNotNull(records);
-        Assertions.assertTrue(records.size() == 2);
+        Assertions.assertEquals(2, records.size());
         for (TestData data : records) {
-            Assertions.assertNotNull(data.getId());
+            Assertions.assertNotEquals(0, data.getId());
             Assertions.assertNotNull(data.getLoginId());
-            Assertions.assertNotNull(data.getSystemId());
+            Assertions.assertNotEquals(0, data.getSystemId());
             Assertions.assertNotNull(data.getStatus());
             Assertions.assertNotNull(data.getDate());
             Assertions.assertNotNull(data.getLocalDate());
@@ -91,20 +91,20 @@ public class AbstractDAOTest {
     }
 
     @Test
-    public void testGenerateID() throws Exception {
+    void testGenerateID() throws Exception {
         long id = daoTest.generateID();
         Assertions.assertTrue(id > 0);
     }
 
     @Test
-    public void testGetByID() throws Exception {
+    void testGetByID() throws Exception {
 
         long id = 1;
-        TestData data = daoTest.getByID(id);
+        TestData data = daoTest.getById(id);
         Assertions.assertNotNull(data);
-        Assertions.assertNotNull(data.getId());
+        Assertions.assertNotEquals(0, data.getId());
         Assertions.assertNotNull(data.getLoginId());
-        Assertions.assertNotNull(data.getSystemId());
+        Assertions.assertNotEquals(0, data.getSystemId());
         Assertions.assertNotNull(data.getStatus());
         Assertions.assertNotNull(data.getDate());
         Assertions.assertNotNull(data.getLocalDate());
@@ -117,9 +117,9 @@ public class AbstractDAOTest {
     }
 
     @Test
-    public void testQueryForString() {
+    void testQueryForString() {
         String sql = "SELECT td_login_id FROM tmp_test_data WHERE td_status!=:status limit 1";
-        HashMap params = new HashMap();
+        HashMap<String, String> params = new HashMap<>();
         params.put("status", "NON-EXISTING STATUS");
 
         String result = daoTest.queryForString(sql, params);
@@ -128,7 +128,7 @@ public class AbstractDAOTest {
     }
 
     @Test
-    public void testPersist() throws Exception {
+    void testPersist() throws Exception {
         long id = daoTest.generateID();
 
         TestData.TestDataGroup group = new TestData.TestDataGroup();
@@ -148,11 +148,11 @@ public class AbstractDAOTest {
         test.setStatus(Status.SUCCESS);
         test.setColor(Color.BLACK);
         test.setType(type);
-        daoTest.persist(test);
+        Assertions.assertNotNull(daoTest.persist(test));
     }
 
     @Test
-    public void testPersistAutomaticSequence() throws Exception {
+    void testPersistAutomaticSequence() throws Exception {
         TestData.TestDataGroup group = new TestData.TestDataGroup();
         group.setText("Some text no auditable");
 
@@ -169,15 +169,12 @@ public class AbstractDAOTest {
         test.setStatus(Status.SUCCESS);
         test.setColor(Color.BLACK);
         test.setType(type);
-        daoTest.persist(test);
+        Assertions.assertNotNull(daoTest.persist(test));
     }
 
     @Test
-    public void testUpdate() throws Exception {
+    void testUpdate() throws Exception {
         long id = 1;
-
-        TestData.TestDataGroup group = new TestData.TestDataGroup();
-        group.setText("Some text no auditable 2");
 
         TestData test = new TestData();
         test.setId(id);
@@ -188,11 +185,11 @@ public class AbstractDAOTest {
         test.setSystemId(2);
         test.setStatus(Status.SUCCESS);
         test.setColor(Color.BLACK);
-        daoTest.update(test);
+        Assertions.assertNotNull(daoTest.update(test));
     }
 
     @Test
-    public void testQueryForInteger() {
+    void testQueryForInteger() {
         HashMap<String, String> params = new HashMap<>();
         String sql = "SELECT pk_test_data FROM tmp_test_data WHERE td_status!=:status limit 1";
         params.put("status", "NON-EXISTING STATUS");
@@ -202,7 +199,7 @@ public class AbstractDAOTest {
     }
 
     @Test
-    public void testQueryForLong() {
+    void testQueryForLong() {
         HashMap<String, String> params = new HashMap<>();
         String sql = "SELECT pk_test_data FROM tmp_test_data WHERE td_status!=:status limit 1";
         params.put("status", "NON-EXISTING STATUS");
@@ -212,7 +209,7 @@ public class AbstractDAOTest {
     }
 
     @Test
-    public void testFind_String_HashMap() {
+    void testFind_String_HashMap() {
         HashMap<String, String> params = new HashMap<>();
         String sql = "SELECT pk_test_data_history FROM tmp_test_data_history limit 1";
 
@@ -221,7 +218,7 @@ public class AbstractDAOTest {
     }
 
     @Test
-    public void testFind_String_HashMap_Class() {
+    void testFind_String_HashMap_Class() {
         HashMap<String, String> params = new HashMap<>();
         String sql = "SELECT pk_test_data_history FROM tmp_test_data_history limit 1";
 
@@ -231,7 +228,7 @@ public class AbstractDAOTest {
     }
 
     @Test
-    public void testFind_String_HashMap_Class_Limit_Offset() {
+    void testFind_String_HashMap_Class_Limit_Offset() {
         HashMap<String, String> params = new HashMap<>();
         String sql = "SELECT pk_test_data_history FROM tmp_test_data_history";
 
@@ -243,7 +240,7 @@ public class AbstractDAOTest {
     }
 
     @Test
-    public void testFind_SQLQueryDynamic_Class() {
+    void testFind_SQLQueryDynamic_Class() {
         SQLQueryDynamic sqlQuery = new SQLQueryDynamic(TestData.class);
         sqlQuery.addCondition("td_login_id", "1234567890", Condition.EQUAL);
         sqlQuery.setTotalResultCount(2);
@@ -253,7 +250,7 @@ public class AbstractDAOTest {
     }
 
     @Test
-    public void testFind_SQLQueryDynamic_Like() {
+    void testFind_SQLQueryDynamic_Like() {
         SQLQueryDynamic sqlQuery = new SQLQueryDynamic(TestData.class);
         sqlQuery.addConditionLikesSmart(new String[]{"td_login_id", "td_status"}, "1234567890");
         sqlQuery.setTotalResultCount(2);
@@ -263,8 +260,8 @@ public class AbstractDAOTest {
     }
 
     @Test
-    public void testFindStrings() {
-        HashMap params = new HashMap();
+    void testFindStrings() {
+        HashMap<String, String> params = new HashMap<>();
         String sql = "SELECT td_text FROM tmp_test_data";
         List<String> result = daoTest.findStrings(sql, params);
         Assertions.assertNotNull(result);
@@ -272,8 +269,8 @@ public class AbstractDAOTest {
     }
 
     @Test
-    public void testFindLongs() {
-        HashMap params = new HashMap();
+    void testFindLongs() {
+        HashMap<String, String> params = new HashMap<>();
         String sql = "SELECT pk_test_data FROM tmp_test_data";
         List<Long> result = daoTest.findLongs(sql, params);
         Assertions.assertNotNull(result);

@@ -2,7 +2,7 @@
  * !--
  * For support and inquiries regarding this library, please contact:
  *   soporte@kanopus.cl
- * 
+ *
  * Project website:
  *   https://www.kanopus.cl
  * %%
@@ -11,9 +11,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,12 +32,12 @@ import java.util.List;
  * This class allows queries to the database using automatic pagination. The
  * main objective of this class is to run queries that return a huge quantity of
  * records, avoiding problems of memory consumption.
- *
- * This class is only kept in memory {@link #LIMIT} records set and not the
+ * <p>
+ * This class is only kept in memory {limit} records set and not the
  * whole entire resultset.
  *
  * @author Pablo Diaz Saavedra
- * @email pabloandres.diazsaavedra@gmail.com
+ *
  */
 public abstract class QueryIterator<T> implements Iterator<T> {
 

@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
  * equal to 0.
  *
  * @author Pablo Diaz Saavedra
- * @email pabloandres.diazsaavedra@gmail.com
+ *
  */
 @SuppressWarnings("all")
 public class SQLQueryDynamic {

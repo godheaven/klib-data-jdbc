@@ -48,7 +48,7 @@ import java.util.Map;
 /**
  *
  * @author Pablo Diaz Saavedra
- * @email pabloandres.diazsaavedra@gmail.com
+ *
  * <p>
  * This utility class is responsible for creating the "RowMapper" dynamically
  * according to the specified class and stores its definition in the

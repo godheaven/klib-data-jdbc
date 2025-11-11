@@ -2,7 +2,7 @@
  * !--
  * For support and inquiries regarding this library, please contact:
  *   soporte@kanopus.cl
- * 
+ *
  * Project website:
  *   https://www.kanopus.cl
  * %%
@@ -11,9 +11,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,32 +37,11 @@ import cl.kanopus.jdbc.entity.annotation.JoinTable;
 import cl.kanopus.jdbc.entity.annotation.Table;
 import cl.kanopus.jdbc.entity.mapper.AbstractRowMapper;
 import cl.kanopus.jdbc.exception.DataException;
-import cl.kanopus.jdbc.impl.engine.CustomEngine;
-import cl.kanopus.jdbc.impl.engine.Engine;
-import cl.kanopus.jdbc.impl.engine.OracleEngine;
-import cl.kanopus.jdbc.impl.engine.PostgresEngine;
-import cl.kanopus.jdbc.impl.engine.SQLServerEngine;
+import cl.kanopus.jdbc.impl.engine.*;
 import cl.kanopus.jdbc.util.JdbcCache;
 import cl.kanopus.jdbc.util.QueryIterator;
 import cl.kanopus.jdbc.util.SQLQueryDynamic;
-import cl.kanopus.jdbc.util.parser.ByteaJsonListParser;
-import cl.kanopus.jdbc.util.parser.ByteaJsonParser;
-import cl.kanopus.jdbc.util.parser.EnumParser;
-import cl.kanopus.jdbc.util.parser.JsonListParser;
-import cl.kanopus.jdbc.util.parser.JsonParser;
-import java.io.StringWriter;
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import cl.kanopus.jdbc.util.parser.*;
 import org.postgresql.util.PGobject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +53,14 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 
+import java.io.StringWriter;
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
 /**
  * This abstract class defines methods for data access that are common,
  * generally, all kinds of data access DAO must implement this class.Thus it is
@@ -84,7 +71,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcCall;
  * @param <T>
  * @param <ID>
  * @author Pablo Diaz Saavedra
- * @email pabloandres.diazsaavedra@gmail.com
+ *
  *
  */
 @SuppressWarnings("all")

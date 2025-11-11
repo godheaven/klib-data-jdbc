@@ -209,7 +209,7 @@ import org.springframework.stereotype.Repository;
 /**
  *
  * @author Pablo Diaz Saavedra
- * @email pabloandres.diazsaavedra@gmail.com
+ *
  *
  */
 @Repository
@@ -278,7 +278,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 /**
  *
  * @author Pablo Diaz Saavedra
- * @email pabloandres.diazsaavedra@gmail.com
+ *
  *
  */
 @ContextConfiguration(locations = "classpath:applicationContext.xml")

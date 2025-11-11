@@ -23,7 +23,8 @@
  */
 package cl.kanopus.jdbc.config;
 
-import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -34,7 +35,6 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
-import java.beans.PropertyVetoException;
 
 @Configuration
 @EnableTransactionManagement
@@ -43,17 +43,15 @@ import java.beans.PropertyVetoException;
 public class TestDataSourceConfig {
 
     @Bean(destroyMethod = "close")
-    public ComboPooledDataSource dataSource() throws PropertyVetoException {
-        ComboPooledDataSource ds = new ComboPooledDataSource();
-        ds.setDriverClass("org.postgresql.Driver");
-        ds.setJdbcUrl("jdbc:postgresql://localhost:5432/test?useSSL=false");
-        ds.setUser("user_test");
-        ds.setPassword("pass_test");
-
-        ds.setAcquireIncrement(3);
-        ds.setMinPoolSize(3);
-        ds.setMaxPoolSize(10);
-        return ds;
+    public HikariDataSource dataSource() {
+        HikariConfig cfg = new HikariConfig();
+        cfg.setDriverClassName("org.postgresql.Driver");
+        cfg.setJdbcUrl("jdbc:postgresql://localhost:5432/test?useSSL=false");
+        cfg.setUsername("user_test");
+        cfg.setPassword("pass_test");
+        cfg.setMaximumPoolSize(10);
+        cfg.setMinimumIdle(3);
+        return new HikariDataSource(cfg);
     }
 
     @Bean

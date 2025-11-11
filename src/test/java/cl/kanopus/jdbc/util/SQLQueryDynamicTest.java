@@ -1,7 +1,31 @@
+/*-
+ * !--
+ * For support and inquiries regarding this library, please contact:
+ *   soporte@kanopus.cl
+ *
+ * Project website:
+ *   https://www.kanopus.cl
+ * %%
+ * Copyright (C) 2025 Pablo Díaz Saavedra
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * --!
+ */
 package cl.kanopus.jdbc.util;
 
 import cl.kanopus.common.data.enums.SortOrder;
 import cl.kanopus.jdbc.entity.enums.JoinOperator;
+import cl.kanopus.jdbc.example.entity.TestData;
 import cl.kanopus.jdbc.example.entity.TestDataEmpty;
 import cl.kanopus.jdbc.example.entity.TestDataHistory;
 import cl.kanopus.jdbc.util.extension.DataType;
@@ -20,12 +44,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/**
- *
- * @author Pablo Diaz Saavedra
- * @email pabloandres.diazsaavedra@gmail.com
- *
- */
 @ExtendWith(SpringExtension.class)
 class SQLQueryDynamicTest {
 
@@ -531,16 +549,32 @@ class SQLQueryDynamicTest {
     @Test
     void validateAddJoinTable() {
         SQLQueryDynamic query = new SQLQueryDynamic(TestDataEmpty.class);
-        query.addJoinTable(JoinOperator.INNER_JOIN, TestDataHistory.class, "id");
+        query.addJoinTable(JoinOperator.INNER_JOIN, TestDataHistory.class, "testDataId");
         System.out.println(query.getSQL());
-        Assertions.assertEquals("SELECT t1.pk_test_data_empty FROM tmp_test_data_empty t1 INNER JOIN tmp_test_data_history jt1 ON t1.pk_test_data_empty=jt1.pk_test_data_history", query.getSQL());
+        Assertions.assertEquals("SELECT t1.pk_test_data_empty FROM tmp_test_data_empty t1 INNER JOIN tmp_test_data_history jt1 ON t1.pk_test_data_empty=jt1.fk_test_data", query.getSQL());
     }
 
     @Test
     void validateAddJoinTableWithAlias() {
         SQLQueryDynamic query = new SQLQueryDynamic(TestDataEmpty.class);
-        query.addJoinTable(JoinOperator.INNER_JOIN, "jtxxx1", TestDataHistory.class, "id");
+        query.addJoinTable(JoinOperator.INNER_JOIN, "jtx", TestDataHistory.class, "info");
+        query.addCondition("id", 2L, SQLQueryDynamic.Condition.EQUAL);
+        query.addCondition("jtx.info", "OK", SQLQueryDynamic.Condition.EQUAL);
+        query.addCondition("jtx.testDataId", 4L, SQLQueryDynamic.Condition.EQUAL);
+
+
         System.out.println(query.getSQL());
-        Assertions.assertEquals("SELECT t1.pk_test_data_empty FROM tmp_test_data_empty t1 INNER JOIN tmp_test_data_history jtxxx1 ON t1.pk_test_data_empty=jtxxx1.pk_test_data_history", query.getSQL());
+        Assertions.assertEquals("SELECT t1.pk_test_data_empty FROM tmp_test_data_empty t1 INNER JOIN tmp_test_data_history jtx ON t1.pk_test_data_empty=jtx.info WHERE t1.pk_test_data_empty=:t1.pk_test_data_empty_0 AND UPPER(jtx.info)=:jtx.info_1 AND jtx.fk_test_data=:jtx.fk_test_data_2", query.getSQL());
+
     }
+
+
+    @Test
+    void validateAddJoinTableWithDot() {
+        SQLQueryDynamic query = new SQLQueryDynamic(TestDataEmpty.class);
+        query.addJoinTable(JoinOperator.INNER_JOIN, TestData.class, "group.text");
+        System.out.println(query.getSQL());
+        Assertions.assertEquals("SELECT t1.pk_test_data_empty FROM tmp_test_data_empty t1 INNER JOIN tmp_test_data jt1 ON t1.pk_test_data_empty=jt1.td_text", query.getSQL());
+    }
+
 }

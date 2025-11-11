@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>cl.kanopus</groupId>
 		<artifactId>kanopus-boot-parent</artifactId>
-		<version>3.5.6</version>
+		<version>3.5.7</version>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
@@ -57,7 +57,6 @@
 		<dependency>
 			<groupId>cl.kanopus.util</groupId>
 			<artifactId>klib-common</artifactId>
-			<version>3.0.0</version>
 		</dependency>
 
 		<dependency>
@@ -86,18 +85,9 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>repackage</id>
-						<phase>package</phase>
-						<goals>
-							<goal>repackage</goal>
-						</goals>
-						<configuration>
-							<skip>true</skip>
-						</configuration>
-					</execution>
-				</executions>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

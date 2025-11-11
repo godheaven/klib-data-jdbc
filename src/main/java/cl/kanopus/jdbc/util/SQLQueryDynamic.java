@@ -1,3 +1,26 @@
+/*-
+ * !--
+ * For support and inquiries regarding this library, please contact:
+ *   soporte@kanopus.cl
+ *
+ * Project website:
+ *   https://www.kanopus.cl
+ * %%
+ * Copyright (C) 2025 Pablo Díaz Saavedra
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * --!
+ */
 package cl.kanopus.jdbc.util;
 
 import cl.kanopus.common.data.enums.SortOrder;
@@ -14,6 +37,7 @@ import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This class allows you to generate Dynamic SQL which can be used in search
@@ -169,16 +193,41 @@ public class SQLQueryDynamic {
     }
 
 
-    public final void addJoinTable(JoinOperator joinOperator, String aliasJoin, Class<? extends Mapping> clazz, String foreignKey) {
-        Table tableJoin = clazz.getDeclaredAnnotation(Table.class);
-        if (tableJoin.keys() == null || tableJoin.keys().length != 1) {
-            throw new RuntimeException("Error JoinTable without keys defined");
+    public final void addJoinTable(JoinOperator joinOperator, String aliasJoin, Class<? extends Mapping> clazzJoin, String foreignKey) {
+
+        //Primary Key
+        Table table = this.clazz.getDeclaredAnnotation(Table.class);
+        String alias = Utils.defaultValue(aliasMap.get(table.name()), "t1");
+        if (table.keys().length == 0) {
+            throw new RuntimeException("Error Table " + table + " without primary key defined");
         }
-        String alias = Utils.defaultValue(aliasJoin, generateJoinAlias(tableJoin.name()));
+        String columnPrimaryKey = alias + "." + table.keys()[0];
+
+        //Foreing Key
+        Table tableJoin = clazzJoin.getDeclaredAnnotation(Table.class);
+        aliasJoin = generateJoinAlias(aliasJoin, tableJoin.name());
+        propertiesTranslationMap.putAll(prepareMapWithAlias(aliasJoin, JdbcCache.translationMap(clazzJoin)));
+
+        String columnForeignKey = getRealName(aliasJoin + "." + foreignKey);
+
+        if (Utils.isNullOrEmpty(columnForeignKey)) {
+            throw new RuntimeException("Error JoinTable without foerign key " + columnForeignKey + " defined");
+        }
+
         sqlJoins.append(" ").append(joinOperator.toString().replace("_", " ")).append(" ").append(tableJoin.name());
-        sqlJoins.append(" ").append(alias);
-        sqlJoins.append(" ON ").append(getRealName(foreignKey)).append("=").append(alias).append(".").append(tableJoin.keys()[0]);
+        sqlJoins.append(" ").append(aliasJoin);
+        sqlJoins.append(" ON ").append(columnPrimaryKey).append("=").append(columnForeignKey);
     }
+
+    private Map<String, String> prepareMapWithAlias(String prefix, Map<String, String> properties) {
+        return properties.entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        entry -> prefix + "." + entry.getKey(),  // Nuevo key con prefijo
+                        Map.Entry::getValue
+                ));
+    }
+
 
     public final void addCustomParam(String name, Object value) {
         if (value instanceof String) {
@@ -679,6 +728,8 @@ public class SQLQueryDynamic {
             return !allNulls;
         } else if (value instanceof List) {
             return !((List) value).isEmpty();
+        } else if (value instanceof byte[] bytes) {
+            return (bytes.length > 0);
         } else {
             return false;
         }
@@ -830,6 +881,7 @@ public class SQLQueryDynamic {
 
     }
 
+
     private String getRealName(String column) {
 
         String fullColumnName = (propertiesTranslationMap != null) ? propertiesTranslationMap.get(column) : column;
@@ -848,9 +900,11 @@ public class SQLQueryDynamic {
 
     }
 
-    private String generateJoinAlias(String name) {
-        indexJoins++;
-        String alias = "jt" + indexJoins;
+    private String generateJoinAlias(String alias, String name) {
+        if (Utils.isNullOrEmpty(alias)) {
+            indexJoins++;
+            alias = "jt" + indexJoins;
+        }
         aliasMap.put(name, alias);
         return alias;
     }

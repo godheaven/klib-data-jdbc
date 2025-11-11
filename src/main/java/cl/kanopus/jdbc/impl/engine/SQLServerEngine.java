@@ -1,3 +1,26 @@
+/*-
+ * !--
+ * For support and inquiries regarding this library, please contact:
+ *   soporte@kanopus.cl
+ * 
+ * Project website:
+ *   https://www.kanopus.cl
+ * %%
+ * Copyright (C) 2025 Pablo Díaz Saavedra
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * --!
+ */
 package cl.kanopus.jdbc.impl.engine;
 
 import java.util.regex.Matcher;
@@ -44,8 +67,11 @@ public class SQLServerEngine implements CustomEngine {
 
     @Override
     public String prepareSQL2Engine(String sql) {
-        String newSql = sql.replaceAll("\\|\\|", "+").replaceAll("count\\(\\*\\)", "count_big\\(\\*\\)");
+        // Usar replace() en lugar de replaceAll() (no evalúa regex)
+        String newSql = sql.replace("||", "+");
 
+        // Reemplazo de count(*) por count_big(*) sin importar mayúsculas/minúsculas
+        newSql = newSql.replaceAll("(?i)count\\(\\s*\\*\\s*\\)", "count_big(*)");
         Matcher matcher = pattern.matcher(newSql);
         return matcher.replaceAll("CAST($1 as date)");
     }

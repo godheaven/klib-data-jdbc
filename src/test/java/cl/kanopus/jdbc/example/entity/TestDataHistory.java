@@ -1,36 +1,52 @@
+/*-
+ * !--
+ * For support and inquiries regarding this library, please contact:
+ *   soporte@kanopus.cl
+ * 
+ * Project website:
+ *   https://www.kanopus.cl
+ * %%
+ * Copyright (C) 2025 Pablo Díaz Saavedra
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * --!
+ */
 package cl.kanopus.jdbc.example.entity;
 
 import cl.kanopus.jdbc.entity.Mapping;
 import cl.kanopus.jdbc.entity.annotation.Column;
 import cl.kanopus.jdbc.entity.annotation.Table;
-
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 /**
- * @author Pablo Diaz Saavedra
- * @email pabloandres.diazsaavedra@gmail.com
+ * Entity class representing the 'tmp_test_data_history' table.
+ * This class is used to map the database table to a Java object.
+ * It includes fields for the primary key, foreign key, and additional information.
+ * The class is annotated with Lombok annotations to generate boilerplate code
+ * such as getters, setters, equals, and hashCode methods.
  */
+@Data
+@EqualsAndHashCode(callSuper = false)
 @Table(name = "tmp_test_data_history", sequence = "tmp_test_data_history_pk_test_data_history_seq", keys = {"pk_test_data_history"})
 public class TestDataHistory extends Mapping {
+
+    @Column(name = "pk_test_data_history", serial = true)
+    private long id;
 
     @Column(name = "fk_test_data", updatable = false)
     private long testDataId;
 
     @Column(name = "info", auditable = false)
     private String info;
-
-    public long getTestDataId() {
-        return testDataId;
-    }
-
-    public void setTestDataId(long testDataId) {
-        this.testDataId = testDataId;
-    }
-
-    public String getInfo() {
-        return info;
-    }
-
-    public void setInfo(String info) {
-        this.info = info;
-    }
 
 }

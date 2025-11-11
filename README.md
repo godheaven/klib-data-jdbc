@@ -1,30 +1,26 @@
-
-![Logo](https://www.kanopus.cl/admin/javax.faces.resource/images/logo-grey.png.xhtml?ln=paradise-layout)
-
+![Logo](https://www.kanopus.cl/admin/javax.faces.resource/images/logo-gray.png.xhtml?ln=paradise-layout)
 
 # TODO:
-1. calcular el nombre de la secuencia automaticamente, ejemplo: {table_name}_{column}_seq
-2. validar @Column  nullable = false
 
-3. evaluar la implementacion de @Id y @GeneratedValue(strategy = GenerationType.IDENTITY)
-4. Actualizar @JoinTable para que calcule automaticamente la propiedad "table"
-5. Implementar @Id para reemplazar @Table(keys)
-6. Implementar existsByID, ya que actualmente se implemento no optimizado
-
-
+1. validar @Column nullable = false
+2. evaluar la implementacion de la anotacion @Id y @GeneratedValue(strategy = GenerationType.IDENTITY)
+3. Implementar @Id para reemplazar @Table(keys)
+4. Implementar existsByID, ya que actualmente se implemento no optimizado
 
 # klib-data-jdbc
 
-This project is designed as a programming model that allows mapping the structures of a relational database to entities represented by Java classes.
+This project is designed as a programming model that allows mapping the structures of a relational database to entities
+represented by Java classes.
 This simplifies the way you interact with the database and reduces writing SQL code.
 
 Currently this library has support for the following database engines:
+
 - Postgresql
 - Oracle
 - SQL Server
 
-
 ## Features
+
 - Automatic SQL generation based on annotations
 - Automatic data encryption by simply adding encrypted=true
 - SQL is prepared in advance avoiding SQL injection
@@ -34,12 +30,13 @@ Currently this library has support for the following database engines:
 - It is possible to build complex queries using SQLQueryDynamic
 - It is possible to group columns of an entity with @ColumnGroup for a better understanding
 - Queries that return many records can implement Paginator to obtain a specific number of records.
-- Queries that return many records can implement QueryIterator, in this way millions of records could be processed without compromising the performance of the application.
- 
+- Queries that return many records can implement QueryIterator, in this way millions of records could be processed
+  without compromising the performance of the application.
 
 ## Usage/Examples
 
 1. Simple mapping
+
 ```java
 package cl.kanopus.jdbc.example.entity;
 
@@ -48,18 +45,18 @@ import cl.kanopus.jdbc.entity.annotation.Column;
 import cl.kanopus.jdbc.entity.annotation.Table;
 
 /**
-  <pre>
-  CREATE TABLE tmp_test_type
-  (
-  pk_test_type integer NOT NULL,
-  name character varying(10) NOT NULL,
-  CONSTRAINT tmp_test_type_pkey PRIMARY KEY (pk_test_type)
-  );
-  ALTER TABLE tmp_test_type OWNER TO user_test;
- 
-  INSERT INTO tmp_test_type(pk_test_type, name) VALUES(1, 'ONE');
-  INSERT INTO tmp_test_type(pk_test_type, name) VALUES(2, 'TWO');
-  </pre>
+ <pre>
+ CREATE TABLE tmp_test_type
+ (
+ pk_test_type integer NOT NULL,
+ name character varying(10) NOT NULL,
+ CONSTRAINT tmp_test_type_pkey PRIMARY KEY (pk_test_type)
+ );
+ ALTER TABLE tmp_test_type OWNER TO user_test;
+
+ INSERT INTO tmp_test_type(pk_test_type, name) VALUES(1, 'ONE');
+ INSERT INTO tmp_test_type(pk_test_type, name) VALUES(2, 'TWO');
+ </pre>
  */
 @Table(name = "tmp_test_type", keys = {"pk_test_type"})
 public class TestType extends Mapping {
@@ -77,6 +74,7 @@ public class TestType extends Mapping {
 ```
 
 2. Complex Mapping
+
 ```java
 package cl.kanopus.jdbc.example.entity;
 
@@ -90,36 +88,37 @@ import cl.kanopus.jdbc.example.entity.enums.Status;
 import cl.kanopus.jdbc.util.parser.EnumParser;
 import cl.kanopus.jdbc.util.parser.JsonListParser;
 import cl.kanopus.jdbc.util.parser.JsonParser;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
 /**
-  <pre>
-  CREATE TABLE tmp_test_data
-  (
-     pk_test_data NUMBER NOT NULL,
-     td_system_id NUMBER NOT NULL,
-     td_login_id VARCHAR2(10 CHAR) NOT NULL,
-     td_date timestamp without time zone NOT NULL,
-     td_local_date date NOT NULL,
-     td_local_date_time timestamp without time zone NOT NULL,
-     td_text VARCHAR2(100 CHAR) NOT NULL,
-     td_status VARCHAR2(10 CHAR) NOT NULL,
-     td_color_id NUMBER,
-     td_color_json JSONB,
-     td_data_json JSONB,
-     td_list_json JSONB,
-     fk_test_type NUMBER NOT NULL
- 
-  );
- 
-  -- Primary key
-  ALTER TABLE tmp_test_data ADD CONSTRAINT PK_TEST PRIMARY KEY (test_id);
- 
-  --sequence CREATE SEQUENCE seq_test_data INCREMENT BY 1 NOCACHE NOCYCLE;
-  </pre>
+ <pre>
+ CREATE TABLE tmp_test_data
+ (
+ pk_test_data NUMBER NOT NULL,
+ td_system_id NUMBER NOT NULL,
+ td_login_id VARCHAR2(10 CHAR) NOT NULL,
+ td_date timestamp without time zone NOT NULL,
+ td_local_date date NOT NULL,
+ td_local_date_time timestamp without time zone NOT NULL,
+ td_text VARCHAR2(100 CHAR) NOT NULL,
+ td_status VARCHAR2(10 CHAR) NOT NULL,
+ td_color_id NUMBER,
+ td_color_json JSONB,
+ td_data_json JSONB,
+ td_list_json JSONB,
+ fk_test_type NUMBER NOT NULL
+
+ );
+
+ -- Primary key
+ ALTER TABLE tmp_test_data ADD CONSTRAINT PK_TEST PRIMARY KEY (test_id);
+
+ --sequence CREATE SEQUENCE seq_test_data INCREMENT BY 1 NOCACHE NOCYCLE;
+ </pre>
  */
 @Table(name = "tmp_test_data", sequence = "tmp_test_data_pk_test_data_seq", keys = {"pk_test_data"})
 public class TestData extends Mapping {
@@ -180,7 +179,7 @@ public class TestData extends Mapping {
         private String text;
         private Date date;
         private boolean enabled;
-        
+
         //Getter And Setter
 
     }
@@ -189,6 +188,7 @@ public class TestData extends Mapping {
 ```
 
 3. Crud Operations
+
 ```java
 package cl.kanopus.jdbc.example;
 
@@ -199,9 +199,11 @@ import cl.kanopus.common.data.Paginator;
 import cl.kanopus.jdbc.util.QueryIterator;
 import cl.kanopus.jdbc.util.SQLQueryDynamic;
 import cl.kanopus.common.data.Searcher;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+
 import org.springframework.stereotype.Repository;
 
 /**
@@ -258,12 +260,14 @@ import cl.kanopus.jdbc.example.entity.enums.Color;
 import cl.kanopus.jdbc.example.entity.enums.Status;
 import cl.kanopus.common.data.Paginator;
 import cl.kanopus.common.data.Searcher;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -400,11 +404,9 @@ public class ExampleService {
 
 ```
 
-
 ## Authors
 
 - [@pabloandres.diazsaavedra](https://www.linkedin.com/in/pablo-diaz-saavedra-4b7b0522/)
-
 
 ## License
 

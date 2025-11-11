@@ -21,29 +21,10 @@
  * limitations under the License.
  * --!
  */
-package cl.kanopus.jdbc.example.entity.enums;
+package cl.kanopus.jdbc.entity.annotation;
 
-import cl.kanopus.common.enums.EnumIdentifiable;
+public final class AnnotationDefaults {
+    private AnnotationDefaults() {}
 
-/**
- *
- * @author Pablo Diaz Saavedra
- * @email pabloandres.diazsaavedra@gmail.com
- */
-public enum Color implements EnumIdentifiable<Integer> {
-
-    RED(1),
-    BLACK(2);
-
-    private int id;
-
-    Color(int id) {
-        this.id = id;
-    }
-
-    @Override
-    public Integer getId() {
-        return id;
-    }
-
+    public static final String UNASSIGNED = "[unassigned]";
 }

@@ -1,19 +1,36 @@
+/*-
+ * !--
+ * For support and inquiries regarding this library, please contact:
+ *   soporte@kanopus.cl
+ *
+ * Project website:
+ *   https://www.kanopus.cl
+ * %%
+ * Copyright (C) 2025 Pablo Díaz Saavedra
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * --!
+ */
 package cl.kanopus.jdbc.util;
 
 import cl.kanopus.common.util.CryptographyUtils;
 import cl.kanopus.common.util.Utils;
 import cl.kanopus.jdbc.entity.Mapping;
-import cl.kanopus.jdbc.entity.annotation.Column;
-import cl.kanopus.jdbc.entity.annotation.ColumnGroup;
-import cl.kanopus.jdbc.entity.annotation.JoinTable;
-import cl.kanopus.jdbc.entity.annotation.Table;
-import cl.kanopus.jdbc.entity.annotation.View;
+import cl.kanopus.jdbc.entity.annotation.*;
 import cl.kanopus.jdbc.entity.mapper.AbstractRowMapper;
-import cl.kanopus.jdbc.util.parser.ByteaJsonListParser;
-import cl.kanopus.jdbc.util.parser.ByteaJsonParser;
-import cl.kanopus.jdbc.util.parser.EnumParser;
-import cl.kanopus.jdbc.util.parser.JsonListParser;
-import cl.kanopus.jdbc.util.parser.JsonParser;
+import cl.kanopus.jdbc.util.parser.*;
+
+import javax.crypto.BadPaddingException;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -27,13 +44,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.crypto.BadPaddingException;
 
 /**
  *
  * @author Pablo Diaz Saavedra
  * @email pabloandres.diazsaavedra@gmail.com
- *
+ * <p>
  * This utility class is responsible for creating the "RowMapper" dynamically
  * according to the specified class and stores its definition in the
  * application's CACHE, to increase the response speed in each conversion
@@ -178,7 +194,7 @@ public class JdbcCache {
                                     JoinTable joinTable = field.getAnnotation(JoinTable.class);
                                     if (joinTable != null) {
                                         try {
-                                            // this is for private scope
+                                            // this is for private scopel
                                             field.setAccessible(true);
                                             field.set(object, rowMapper(joinTable.table(), loadAll).mapRow(rs, i));
                                         } catch (Exception ex) {

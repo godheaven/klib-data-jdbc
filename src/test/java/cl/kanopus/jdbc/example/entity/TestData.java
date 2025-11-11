@@ -1,3 +1,26 @@
+/*-
+ * !--
+ * For support and inquiries regarding this library, please contact:
+ *   soporte@kanopus.cl
+ * 
+ * Project website:
+ *   https://www.kanopus.cl
+ * %%
+ * Copyright (C) 2025 Pablo Díaz Saavedra
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * --!
+ */
 package cl.kanopus.jdbc.example.entity;
 
 import cl.kanopus.jdbc.entity.Mapping;
@@ -10,6 +33,8 @@ import cl.kanopus.jdbc.example.entity.enums.Status;
 import cl.kanopus.jdbc.util.parser.EnumParser;
 import cl.kanopus.jdbc.util.parser.JsonListParser;
 import cl.kanopus.jdbc.util.parser.JsonParser;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,9 +42,14 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * @author Pablo Diaz Saavedra
- * @email pabloandres.diazsaavedra@gmail.com
+ * Entity class representing the 'tmp_test_data' table.
+ * This class is used to map the database table to a Java object.
+ * It includes fields for various data types, including enums and JSON data.
+ * The class is annotated with Lombok annotations to generate boilerplate code
+ * such as getters, setters, equals, and hashCode methods.
  */
+@Data
+@EqualsAndHashCode(callSuper = false)
 @Table(name = "tmp_test_data", sequence = "tmp_test_data_pk_test_data_seq", keys = {"pk_test_data"})
 public class TestData extends Mapping {
 
@@ -62,163 +92,22 @@ public class TestData extends Mapping {
     @ColumnGroup(result = TestDataGroup.class, nullable = true)
     private TestDataGroup group;
 
-    public long getId() {
-        return id;
-    }
 
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public long getSystemId() {
-        return systemId;
-    }
-
-    public void setSystemId(long systemId) {
-        this.systemId = systemId;
-    }
-
-    public String getLoginId() {
-        return loginId;
-    }
-
-    public void setLoginId(String loginId) {
-        this.loginId = loginId;
-    }
-
-    public Date getDate() {
-        return date;
-    }
-
-    public void setDate(Date date) {
-        this.date = date;
-    }
-
-    public LocalDate getLocalDate() {
-        return localDate;
-    }
-
-    public void setLocalDate(LocalDate localDate) {
-        this.localDate = localDate;
-    }
-
-    public LocalDateTime getLocalDateTime() {
-        return localDateTime;
-    }
-
-    public void setLocalDateTime(LocalDateTime localDateTime) {
-        this.localDateTime = localDateTime;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-
-    public Color getColor() {
-        return color;
-    }
-
-    public void setColor(Color color) {
-        this.color = color;
-    }
-
-    public List<Color> getColors() {
-        return colors;
-    }
-
-    public void setColors(List<Color> colors) {
-        this.colors = colors;
-    }
-
-    public JsonData getJson() {
-        return json;
-    }
-
-    public void setJson(JsonData json) {
-        this.json = json;
-    }
-
-    public List<JsonData> getJsonList() {
-        return jsonList;
-    }
-
-    public void setJsonList(List<JsonData> jsonList) {
-        this.jsonList = jsonList;
-    }
-
-    public TestType getType() {
-        return type;
-    }
-
-    public void setType(TestType type) {
-        this.type = type;
-    }
-
-    public TestDataGroup getGroup() {
-        return group;
-    }
-
-    public void setGroup(TestDataGroup group) {
-        this.group = group;
-    }
-
+    @Data
     public static class TestDataGroup {
 
         @Column(name = "td_text", length = 100, auditable = false)
         private String text;
 
-        public String getText() {
-            return text;
-        }
-
-        public void setText(String text) {
-            this.text = text;
-        }
-
     }
 
+    @Data
     public static class JsonData {
 
         private int id;
         private String text;
         private Date date;
         private boolean enabled;
-
-        public int getId() {
-            return id;
-        }
-
-        public void setId(int id) {
-            this.id = id;
-        }
-
-        public String getText() {
-            return text;
-        }
-
-        public void setText(String text) {
-            this.text = text;
-        }
-
-        public Date getDate() {
-            return date;
-        }
-
-        public void setDate(Date date) {
-            this.date = date;
-        }
-
-        public boolean isEnabled() {
-            return enabled;
-        }
-
-        public void setEnabled(boolean enabled) {
-            this.enabled = enabled;
-        }
 
     }
 }

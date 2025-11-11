@@ -281,7 +281,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  *
  *
  */
-@ContextConfiguration(locations = "classpath:applicationContext.xml")
+@ContextConfiguration(classes = cl.kanopus.jdbc.config.TestDataSourceConfig.class)
 @ExtendWith(SpringExtension.class)
 public class ExampleService {
 

@@ -2,7 +2,7 @@
  * !--
  * For support and inquiries regarding this library, please contact:
  *   soporte@kanopus.cl
- * 
+ *
  * Project website:
  *   https://www.kanopus.cl
  * %%
@@ -11,9 +11,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@
 package cl.kanopus.jdbc.impl;
 
 import cl.kanopus.common.data.enums.SortOrder;
+import cl.kanopus.jdbc.config.TestDataSourceConfig;
 import cl.kanopus.jdbc.example.entity.TestData;
 import cl.kanopus.jdbc.example.entity.TestDataEmpty;
 import cl.kanopus.jdbc.example.entity.TestDataHistory;
@@ -33,9 +34,11 @@ import cl.kanopus.jdbc.example.entity.enums.Status;
 import cl.kanopus.jdbc.util.SQLQueryDynamic;
 import cl.kanopus.jdbc.util.SQLQueryDynamic.Condition;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -45,12 +48,22 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-@ContextConfiguration(locations = "classpath:applicationContext.xml")
+@ContextConfiguration(classes = {TestDataSourceConfig.class})
 @ExtendWith(SpringExtension.class)
 class AbstractDAOTest {
 
     @Autowired
-    private DAOTest daoTest;
+    private DAOTestImpl daoTest;
+
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @BeforeEach
+    void initDao() {
+        if (this.daoTest == null) {
+            this.daoTest = applicationContext.getBean(DAOTestImpl.class);
+        }
+    }
 
     @Test
     void testDeleteByID_long() throws Exception {

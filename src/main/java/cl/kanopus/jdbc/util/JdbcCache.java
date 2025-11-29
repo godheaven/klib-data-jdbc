@@ -23,8 +23,8 @@
  */
 package cl.kanopus.jdbc.util;
 
-import cl.kanopus.common.util.CryptographyUtils;
 import cl.kanopus.common.util.Utils;
+import cl.kanopus.common.util.crypto.CryptographyUtils;
 import cl.kanopus.jdbc.entity.Mapping;
 import cl.kanopus.jdbc.entity.annotation.*;
 import cl.kanopus.jdbc.entity.mapper.AbstractRowMapper;

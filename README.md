@@ -1,12 +1,5 @@
 ![Logo](https://www.kanopus.cl/admin/javax.faces.resource/images/logo-gray.png.xhtml?ln=paradise-layout)
 
-# TODO:
-
-1. validar @Column nullable = false
-2. evaluar la implementacion de la anotacion @Id y @GeneratedValue(strategy = GenerationType.IDENTITY)
-3. Implementar @Id para reemplazar @Table(keys)
-4. Implementar existsByID, ya que actualmente se implemento no optimizado
-
 # klib-data-jdbc
 
 This project is designed as a programming model that allows mapping the structures of a relational database to entities
@@ -218,10 +211,8 @@ public class ExampleDAO extends AbstractBaseDAO<TestData, Long> implements DAOIn
     /**
      * Get a list of records with a limit
      *
-     * @param searcher
-     * @return
      */
-    public Paginator<TestData> findWithPaginator(Searcher searcher) throws DataException {
+    public Paginator<TestData> findWithPaginator(Searcher<String> searcher) throws DataException {
         SQLQueryDynamic query = new SQLQueryDynamic(TestData.class);
         query.setLimit(searcher.getLimit());
         query.setOffset(searcher.getOffset());
@@ -233,19 +224,17 @@ public class ExampleDAO extends AbstractBaseDAO<TestData, Long> implements DAOIn
      * is ideal for traversing millions of records from the database without
      * causing overhead.
      *
-     * @return
      */
     public Iterator<TestData> findWithIterator() {
         String sql = "SELECT * FROM tmp_test_data";
-        final HashMap params = new HashMap();
+        final HashMap<String, String> params = new HashMap<>();
 
-        Iterator<TestData> iterator = new QueryIterator<TestData>() {
+        return new QueryIterator<>() {
             @Override
             public List<TestData> getData(int limit, int offset) {
                 return find(sql, params, TestData.class, limit, offset);
             }
         };
-        return iterator;
 
     }
 }
@@ -290,10 +279,11 @@ public class ExampleService {
 
     @Test
     public void exampleFindWithPagination() throws Exception {
-        Searcher searcher = new Searcher();
+        Searcher<String> searcher = new Searcher<>();
         Paginator<TestData> records = dao.findWithPaginator(searcher);
         for (TestData data : records.getRecords()) {
             //Print data here
+            System.out.printlm(data);
         }
     }
 
@@ -303,6 +293,7 @@ public class ExampleService {
         while (iterator.hasNext()) {
             TestData data = iterator.next();
             //Print data here
+            System.out.printlm(data);
         }
     }
 

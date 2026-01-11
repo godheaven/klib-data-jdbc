@@ -14,6 +14,13 @@
 	<packaging>jar</packaging>
 	<name>klib-data-jdbc</name>
 
+	<scm>
+		<connection>scm:git:https://github.com/godheaven/klib-data-jdbc.git</connection>
+		<developerConnection>scm:git:https://github.com/godheaven/klib-data-jdbc.git</developerConnection>
+		<url>https://github.com/godheaven/klib-data-jdbc</url>
+		<tag>HEAD</tag>
+	</scm>
+
 	<properties>
 		<maven.test.skip>false</maven.test.skip>
 		<license.skip>false</license.skip>

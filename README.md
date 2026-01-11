@@ -1,4 +1,4 @@
-![Logo](https://www.kanopus.cl/admin/javax.faces.resource/images/logo-gray.png.xhtml?ln=paradise-layout)
+![Logo](https://www.kanopus.cl/assets/kanopus-grey.png)
 
 # klib-data-jdbc
 
@@ -25,6 +25,58 @@ Currently this library has support for the following database engines:
 - Queries that return many records can implement Paginator to obtain a specific number of records.
 - Queries that return many records can implement QueryIterator, in this way millions of records could be processed
   without compromising the performance of the application.
+
+## Usage
+
+Add the library to your project (Maven example):
+
+```xml
+
+<dependency>
+	<groupId>cl.kanopus</groupId>
+	<artifactId>klib-data-jdbc</artifactId>
+	<version>3.59.0</version>
+</dependency>
+```
+
+Quick start (high-level):
+
+- Annotate your Java classes with `@Table` and each mapped field with `@Column` (or use `@ColumnGroup` / `@JoinTable`
+  for nested/grouped mappings).
+- Create a DAO by extending `AbstractBaseDAO<Entity, ID>` and (optionally) implement `DAOInterface`.
+- Use DAO methods to perform common operations: `getByID(id)`, `persist(entity)`, `deleteByID(id)`, `find(...)`,
+  `findPaginator(...)`, and `generateID()` for manual id generation.
+- For dynamic queries use `SQLQueryDynamic`. For streaming large result sets use `QueryIterator`.
+
+Minimal example (conceptual):
+
+```java
+// Define an entity
+@Table(name = "tmp_test_type", keys = {"pk_test_type"})
+public class TestType extends Mapping {
+    @Column(name = "pk_test_type")
+    private long id;
+
+    @Column(name = "name", length = 10)
+    private String name;
+    // getters/setters...
+}
+
+// DAO usage (inside a Spring @Repository)
+public class TestTypeDAO extends AbstractBaseDAO<TestType, Long> implements DAOInterface<TestType, Long> {
+    public TestType get(long id) {
+        return getByID(id);
+    }
+
+    public void save(TestType t) {
+        persist(t);
+    }
+}
+```
+
+When running tests or integrating with a Spring application, configure a `DataSource` (see
+`test/config/TestDataSourceConfig.java`) and include the proper JDBC driver for your database (
+Postgres/Oracle/SQLServer).
 
 ## Usage/Examples
 

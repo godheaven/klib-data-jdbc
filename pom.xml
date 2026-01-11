@@ -5,19 +5,19 @@
 	<parent>
 		<groupId>cl.kanopus</groupId>
 		<artifactId>kanopus-boot-parent</artifactId>
-		<version>3.58.0</version>
+		<version>3.59.0</version>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cl.kanopus.util</groupId>
 	<artifactId>klib-data-jdbc</artifactId>
-	<version>3.58.0</version>
 	<packaging>jar</packaging>
 	<name>klib-data-jdbc</name>
 
 	<properties>
 		<maven.test.skip>false</maven.test.skip>
 		<license.skip>false</license.skip>
+		<jacoco.minimum.coverage>0.70</jacoco.minimum.coverage>
 	</properties>
 
 	<dependencies>

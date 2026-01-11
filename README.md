@@ -11,6 +11,7 @@ Currently this library has support for the following database engines:
 - Postgresql
 - Oracle
 - SQL Server
+- DB2
 
 ## Features
 

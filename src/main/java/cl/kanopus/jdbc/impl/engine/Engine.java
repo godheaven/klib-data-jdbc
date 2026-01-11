@@ -26,5 +26,6 @@ package cl.kanopus.jdbc.impl.engine;
 public enum Engine {
     ORACLE,
     POSTGRES,
-    SQLSERVER
+    SQLSERVER,
+    DB2
 }

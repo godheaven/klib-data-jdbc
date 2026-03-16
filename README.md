@@ -455,9 +455,9 @@ public class ExampleService {
 
 ## 👤 Author
 
-**Pablo Andrés Díaz Saavedra** — Founder of **Kanopus – Estrellas del Software**
+⭐**Pablo Andrés Díaz Saavedra** — Founder of **Kanopus – Software Guided by the Stars**⭐
 
-Kanopus builds tools and platforms that simplify software development and DevOps processes.
+Kanopus is building a constellation of developers creating tools, libraries and platforms that simplify software engineering.
 
 [GitHub](https://github.com/godheaven) | [LinkedIn](https://www.linkedin.com/in/pablo-diaz-saavedra-4b7b0522/) | [Website](https://kanopus.cl)
 

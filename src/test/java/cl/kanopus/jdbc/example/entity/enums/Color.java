@@ -26,12 +26,9 @@ package cl.kanopus.jdbc.example.entity.enums;
 import cl.kanopus.common.enums.EnumIdentifiable;
 
 /**
- *
  * @author Pablo Diaz Saavedra
- *
  */
 public enum Color implements EnumIdentifiable<Integer> {
-
     RED(1),
     BLACK(2);
 
@@ -45,5 +42,4 @@ public enum Color implements EnumIdentifiable<Integer> {
     public Integer getId() {
         return id;
     }
-
 }

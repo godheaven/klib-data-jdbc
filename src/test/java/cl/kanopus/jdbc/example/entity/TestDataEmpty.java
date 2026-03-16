@@ -2,7 +2,7 @@
  * !--
  * For support and inquiries regarding this library, please contact:
  *   soporte@kanopus.cl
- * 
+ *
  * Project website:
  *   https://www.kanopus.cl
  * %%
@@ -11,9 +11,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,15 +29,17 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * Entity class representing the 'tmp_test_data_empty' table.
- * This class is used to map the database table to a Java object.
- * It includes only the primary key field.
- * The class is annotated with Lombok annotations to generate boilerplate code
- * such as getters, setters, equals, and hashCode methods.
+ * Entity class representing the 'tmp_test_data_empty' table. This class is used to map the database
+ * table to a Java object. It includes only the primary key field. The class is annotated with
+ * Lombok annotations to generate boilerplate code such as getters, setters, equals, and hashCode
+ * methods.
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@Table(name = "tmp_test_data_empty", keys = {"pk_test_data_empty"}, defaultOrderBy = "pk_test_data_empty")
+@Table(
+        name = "tmp_test_data_empty",
+        keys = {"pk_test_data_empty"},
+        defaultOrderBy = "pk_test_data_empty")
 public class TestDataEmpty extends TestViewData {
 
     @Column(name = "pk_test_data_empty")

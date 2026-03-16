@@ -39,5 +39,4 @@ public abstract class EnumParser {
         }
         return null;
     }
-
 }

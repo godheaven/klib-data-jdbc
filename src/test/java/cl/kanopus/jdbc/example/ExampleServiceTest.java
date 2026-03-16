@@ -30,6 +30,12 @@ import cl.kanopus.jdbc.example.entity.TestData;
 import cl.kanopus.jdbc.example.entity.TestType;
 import cl.kanopus.jdbc.example.entity.enums.Color;
 import cl.kanopus.jdbc.example.entity.enums.Status;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,22 +45,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-
 @ContextConfiguration(classes = {TestDataSourceConfig.class})
 @ExtendWith(SpringExtension.class)
 class ExampleServiceTest {
 
-    @Autowired
-    private ExampleDAO dao;
+    @Autowired private ExampleDAO dao;
 
-    @Autowired
-    private ApplicationContext applicationContext;
+    @Autowired private ApplicationContext applicationContext;
 
     @BeforeEach
     void initDao() {
@@ -68,7 +65,7 @@ class ExampleServiceTest {
         Paginator<TestData> records = dao.findWithPaginator(new Searcher<>());
         Assertions.assertNotNull(records);
         for (TestData data : records.getRecords()) {
-            //Print data here
+            // Print data here
             Assertions.assertNotNull(data);
             Assertions.assertTrue(data.getId() > 0);
         }
@@ -94,7 +91,6 @@ class ExampleServiceTest {
         }
     }
 
-
     @Test
     void exampleFindQueryIteratorWithSQLQueryDynamicDefaultLimit5() {
         Iterator<TestData> iterator = dao.findQueryIteratorWithSQLQueryDynamicDefaultLimit5();
@@ -104,7 +100,6 @@ class ExampleServiceTest {
             Assertions.assertTrue(data.getId() > 0);
         }
     }
-
 
     @Test
     void exampleGetByID() {
@@ -133,7 +128,8 @@ class ExampleServiceTest {
         group.setText("Data Example");
 
         TestData entity = new TestData();
-        entity.setId(0); //If this field is Zero and serial = true, will no be included into SQL persist
+        entity.setId(
+                0); // If this field is Zero and serial = true, will no be included into SQL persist
         entity.setColor(Color.RED);
         entity.setSystemId(342);
         entity.setLoginId("test");

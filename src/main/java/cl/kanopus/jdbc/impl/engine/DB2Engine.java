@@ -24,14 +24,11 @@
 package cl.kanopus.jdbc.impl.engine;
 
 /**
- *
  * @author Pablo Diaz Saavedra
- *
  */
 public class DB2Engine implements CustomEngine {
 
-    protected DB2Engine() {
-    }
+    protected DB2Engine() {}
 
     // Singleton Instance
     private static class SingletonHolder {

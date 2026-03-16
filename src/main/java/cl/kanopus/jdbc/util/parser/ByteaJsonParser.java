@@ -34,5 +34,4 @@ public abstract class ByteaJsonParser {
     public static <T> T parse(Class<T> type, String json) {
         return GsonUtils.custom.fromJson(json, type);
     }
-
 }

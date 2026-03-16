@@ -1,4 +1,8 @@
-![Logo](https://www.kanopus.cl/assets/kanopus-grey.png)
+<p align="left">
+  <img src="https://www.kanopus.cl/assets/kanopus_black.png" width="220"/>
+</p>
+
+![Maven](https://img.shields.io/maven-central/v/cl.kanopus.util/klib-data-jdbc) ![License](https://img.shields.io/badge/license-Apache%20License%202.0-blue) ![Java](https://img.shields.io/badge/java-17+-orange)
 
 # klib-data-jdbc
 
@@ -13,7 +17,7 @@ Currently this library has support for the following database engines:
 - SQL Server
 - DB2
 
-## Features
+## ✨ Features
 
 - Automatic SQL generation based on annotations
 - Automatic data encryption by simply adding encrypted=true
@@ -27,18 +31,20 @@ Currently this library has support for the following database engines:
 - Queries that return many records can implement QueryIterator, in this way millions of records could be processed
   without compromising the performance of the application.
 
-## Usage
+## 🚀 Installation
 
-Add the library to your project (Maven example):
+Add the dependency to your `pom.xml`:
 
 ```xml
-
 <dependency>
-	<groupId>cl.kanopus</groupId>
-	<artifactId>klib-data-jdbc</artifactId>
-	<version>3.59.0</version>
+    <groupId>cl.kanopus.util</groupId>
+    <artifactId>klib-data-jdbc</artifactId>
+    <version>4.03.0</version>
 </dependency>
 ```
+
+## 🚀 Usage Guide
+
 
 Quick start (high-level):
 
@@ -79,7 +85,6 @@ When running tests or integrating with a Spring application, configure a `DataSo
 `test/config/TestDataSourceConfig.java`) and include the proper JDBC driver for your database (
 Postgres/Oracle/SQLServer).
 
-## Usage/Examples
 
 1. Simple mapping
 
@@ -448,17 +453,18 @@ public class ExampleService {
 
 ```
 
-## Authors
+## 👤 Author
 
-- [@pabloandres.diazsaavedra](https://www.linkedin.com/in/pablo-diaz-saavedra-4b7b0522/)
+**Pablo Andrés Díaz Saavedra** — Founder of **Kanopus – Estrellas del Software**
 
-## License
+Kanopus builds tools and platforms that simplify software development and DevOps processes.
 
-This software is licensed under the Apache License, Version 2.0. See the LICENSE file for details.
-I hope you enjoy it.
+[GitHub](https://github.com/godheaven) | [LinkedIn](https://www.linkedin.com/in/pablo-diaz-saavedra-4b7b0522/) | [Website](https://kanopus.cl)
 
-[![Apache License, Version 2.0](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg)](https://opensource.org/license/apache-2-0)
+## 📄 License
 
-## Support
+This project is licensed under the Apache License 2.0.
 
-For support, email soporte@kanopus.cl
+## 🛟 Support
+
+For support or questions contact: 📧 [soporte@kanopus.cl](mailto:soporte@kanopus.cl)

@@ -27,11 +27,9 @@ import cl.kanopus.common.util.GsonUtils;
 
 public abstract class JsonParser {
 
-    private JsonParser() {
-    }
+    private JsonParser() {}
 
     public static <T> T parse(Class<T> type, String json) {
         return GsonUtils.custom.fromJson(json, type);
     }
-
 }

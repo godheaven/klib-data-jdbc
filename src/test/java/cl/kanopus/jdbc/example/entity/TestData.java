@@ -2,7 +2,7 @@
  * !--
  * For support and inquiries regarding this library, please contact:
  *   soporte@kanopus.cl
- * 
+ *
  * Project website:
  *   https://www.kanopus.cl
  * %%
@@ -11,9 +11,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,24 +33,25 @@ import cl.kanopus.jdbc.example.entity.enums.Status;
 import cl.kanopus.jdbc.util.parser.EnumParser;
 import cl.kanopus.jdbc.util.parser.JsonListParser;
 import cl.kanopus.jdbc.util.parser.JsonParser;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
- * Entity class representing the 'tmp_test_data' table.
- * This class is used to map the database table to a Java object.
- * It includes fields for various data types, including enums and JSON data.
- * The class is annotated with Lombok annotations to generate boilerplate code
- * such as getters, setters, equals, and hashCode methods.
+ * Entity class representing the 'tmp_test_data' table. This class is used to map the database table
+ * to a Java object. It includes fields for various data types, including enums and JSON data. The
+ * class is annotated with Lombok annotations to generate boilerplate code such as getters, setters,
+ * equals, and hashCode methods.
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@Table(name = "tmp_test_data", sequence = "tmp_test_data_pk_test_data_seq", keys = {"pk_test_data"})
+@Table(
+        name = "tmp_test_data",
+        sequence = "tmp_test_data_pk_test_data_seq",
+        keys = {"pk_test_data"})
 public class TestData extends Mapping {
 
     @Column(name = "pk_test_data", serial = true)
@@ -92,13 +93,11 @@ public class TestData extends Mapping {
     @ColumnGroup(result = TestDataGroup.class, nullable = true)
     private TestDataGroup group;
 
-
     @Data
     public static class TestDataGroup {
 
         @Column(name = "td_text", length = 100, auditable = false)
         private String text;
-
     }
 
     @Data
@@ -108,6 +107,5 @@ public class TestData extends Mapping {
         private String text;
         private Date date;
         private boolean enabled;
-
     }
 }

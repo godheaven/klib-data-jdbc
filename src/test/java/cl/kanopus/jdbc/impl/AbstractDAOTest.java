@@ -33,6 +33,11 @@ import cl.kanopus.jdbc.example.entity.enums.Color;
 import cl.kanopus.jdbc.example.entity.enums.Status;
 import cl.kanopus.jdbc.util.SQLQueryDynamic;
 import cl.kanopus.jdbc.util.SQLQueryDynamic.Condition;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,21 +47,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-
 @ContextConfiguration(classes = {TestDataSourceConfig.class})
 @ExtendWith(SpringExtension.class)
 class AbstractDAOTest {
 
-    @Autowired
-    private DAOTestImpl daoTest;
+    @Autowired private DAOTestImpl daoTest;
 
-    @Autowired
-    private ApplicationContext applicationContext;
+    @Autowired private ApplicationContext applicationContext;
 
     @BeforeEach
     void initDao() {
@@ -89,10 +86,10 @@ class AbstractDAOTest {
             Assertions.assertNotNull(data.getColor());
             Assertions.assertNotNull(data.getGroup());
             Assertions.assertNotNull(data.getGroup().getText());
-            Assertions.assertTrue(data.getStatus() == Status.SUCCESS || data.getStatus() == Status.ERROR);
+            Assertions.assertTrue(
+                    data.getStatus() == Status.SUCCESS || data.getStatus() == Status.ERROR);
             Assertions.assertTrue(data.getColor() == Color.BLACK || data.getColor() == Color.RED);
         }
-
     }
 
     @Test
@@ -121,7 +118,8 @@ class AbstractDAOTest {
             Assertions.assertNotNull(data.getColor());
             Assertions.assertNotNull(data.getGroup());
             Assertions.assertNotNull(data.getGroup().getText());
-            Assertions.assertTrue(data.getStatus() == Status.SUCCESS || data.getStatus() == Status.ERROR);
+            Assertions.assertTrue(
+                    data.getStatus() == Status.SUCCESS || data.getStatus() == Status.ERROR);
             Assertions.assertTrue(data.getColor() == Color.BLACK || data.getColor() == Color.RED);
         }
     }
@@ -258,9 +256,9 @@ class AbstractDAOTest {
         HashMap<String, String> params = new HashMap<>();
         String sql = "SELECT pk_test_data_history FROM tmp_test_data_history limit 1";
 
-        List<TestDataHistory> result = (List<TestDataHistory>) daoTest.find(sql, params, TestDataHistory.class);
+        List<TestDataHistory> result =
+                (List<TestDataHistory>) daoTest.find(sql, params, TestDataHistory.class);
         Assertions.assertNotNull(result);
-
     }
 
     @Test
@@ -270,9 +268,10 @@ class AbstractDAOTest {
 
         int limit = 1;
         int offset = 2;
-        List<TestDataHistory> result = (List<TestDataHistory>) daoTest.find(sql, params, TestDataHistory.class, limit, offset);
+        List<TestDataHistory> result =
+                (List<TestDataHistory>)
+                        daoTest.find(sql, params, TestDataHistory.class, limit, offset);
         Assertions.assertNotNull(result);
-
     }
 
     @Test
@@ -288,7 +287,7 @@ class AbstractDAOTest {
     @Test
     void testFind_SQLQueryDynamic_Like() {
         SQLQueryDynamic sqlQuery = new SQLQueryDynamic(TestData.class);
-        sqlQuery.addConditionLikesSmart(new String[]{"td_login_id", "td_status"}, "1234567890");
+        sqlQuery.addConditionLikesSmart(new String[] {"td_login_id", "td_status"}, "1234567890");
         sqlQuery.setTotalResultCount(2);
 
         List result = daoTest.find(sqlQuery);
@@ -301,7 +300,6 @@ class AbstractDAOTest {
         String sql = "SELECT td_text FROM tmp_test_data";
         List<String> result = daoTest.findStrings(sql, params);
         Assertions.assertNotNull(result);
-
     }
 
     @Test
@@ -311,5 +309,4 @@ class AbstractDAOTest {
         List<Long> result = daoTest.findLongs(sql, params);
         Assertions.assertNotNull(result);
     }
-
 }

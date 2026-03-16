@@ -2,7 +2,7 @@
  * !--
  * For support and inquiries regarding this library, please contact:
  *   soporte@kanopus.cl
- * 
+ *
  * Project website:
  *   https://www.kanopus.cl
  * %%
@@ -11,9 +11,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,12 +25,11 @@ package cl.kanopus.jdbc.util;
 
 import cl.kanopus.jdbc.example.entity.TestData;
 import cl.kanopus.jdbc.example.entity.TestViewData;
+import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import java.util.Map;
 
 @ExtendWith(SpringExtension.class)
 class JdbcCacheTest {
@@ -53,14 +52,18 @@ class JdbcCacheTest {
     void validateSqlBaseLoadAll() {
         JdbcCache.SqlBase base = JdbcCache.sqlBase(TestData.class, true);
         Assertions.assertNotNull(base.getSql());
-        Assertions.assertEquals("SELECT t1.pk_test_data, t1.td_system_id, t1.td_login_id, t1.td_date, t1.td_local_date, t1.td_local_date_time, t1.td_status, t1.td_color_id, t1.td_color_json, t1.td_data_json, t1.td_list_json, t2.pk_test_type, t2.name AS tt_name, t1.td_text FROM tmp_test_data t1 INNER JOIN tmp_test_type t2 ON t1.fk_test_type=t2.pk_test_type", base.getSql());
+        Assertions.assertEquals(
+                "SELECT t1.pk_test_data, t1.td_system_id, t1.td_login_id, t1.td_date, t1.td_local_date, t1.td_local_date_time, t1.td_status, t1.td_color_id, t1.td_color_json, t1.td_data_json, t1.td_list_json, t2.pk_test_type, t2.name AS tt_name, t1.td_text FROM tmp_test_data t1 INNER JOIN tmp_test_type t2 ON t1.fk_test_type=t2.pk_test_type",
+                base.getSql());
     }
 
     @Test
     void validateSqlBaseLazy() {
         JdbcCache.SqlBase baseLazy = JdbcCache.sqlBase(TestData.class, false);
         Assertions.assertNotNull(baseLazy.getSql());
-        Assertions.assertEquals("SELECT t1.pk_test_data, t1.td_system_id, t1.td_login_id, t1.td_date, t1.td_local_date, t1.td_local_date_time, t1.td_status, t1.td_color_id, t1.td_color_json, t1.td_data_json, t1.td_list_json, t1.td_text FROM tmp_test_data t1", baseLazy.getSql());
+        Assertions.assertEquals(
+                "SELECT t1.pk_test_data, t1.td_system_id, t1.td_login_id, t1.td_date, t1.td_local_date, t1.td_local_date_time, t1.td_status, t1.td_color_id, t1.td_color_json, t1.td_data_json, t1.td_list_json, t1.td_text FROM tmp_test_data t1",
+                baseLazy.getSql());
     }
 
     @Test
@@ -69,5 +72,4 @@ class JdbcCacheTest {
         Assertions.assertNotNull(base.getSql());
         Assertions.assertEquals("SELECT * FROM tmp_test_data", base.getSql());
     }
-
 }

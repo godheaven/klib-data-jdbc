@@ -26,15 +26,11 @@ package cl.kanopus.jdbc.entity.mapper;
 import org.springframework.jdbc.core.RowMapper;
 
 /**
- *
  * AbstractRowMapper class which implements RowMapper interface.
- * <p>
- * RowMapper is used to convert the ResultSet into domain specific object. All
- * class of types RowMapper must be implemented this abstract class and override
- * the mapRow() method.
+ *
+ * <p>RowMapper is used to convert the ResultSet into domain specific object. All class of types
+ * RowMapper must be implemented this abstract class and override the mapRow() method.
  *
  * @param <T>
  */
-public abstract class AbstractRowMapper<T> implements RowMapper<T> {
-
-}
+public abstract class AbstractRowMapper<T> implements RowMapper<T> {}

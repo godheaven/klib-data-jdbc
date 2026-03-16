@@ -27,18 +27,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- *
  * @author Pablo Diaz Saavedra
- *
  */
 public class SQLServerEngine implements CustomEngine {
 
     final Pattern pattern = Pattern.compile("([\\\\.a-zA-Z0-9_-]+)::date", Pattern.MULTILINE);
 
-    protected SQLServerEngine() {
-    }
+    protected SQLServerEngine() {}
 
-    //Singleton Instance
+    // Singleton Instance
     private static class SingletonHolder {
 
         public static final SQLServerEngine INSTANCE = new SQLServerEngine();

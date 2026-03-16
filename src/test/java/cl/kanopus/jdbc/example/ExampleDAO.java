@@ -2,7 +2,7 @@
  * !--
  * For support and inquiries regarding this library, please contact:
  *   soporte@kanopus.cl
- * 
+ *
  * Project website:
  *   https://www.kanopus.cl
  * %%
@@ -11,9 +11,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,14 +30,14 @@ import cl.kanopus.jdbc.example.entity.TestData;
 import cl.kanopus.jdbc.exception.DataException;
 import cl.kanopus.jdbc.util.QueryIterator;
 import cl.kanopus.jdbc.util.SQLQueryDynamic;
-import org.springframework.stereotype.Repository;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import org.springframework.stereotype.Repository;
 
 @Repository
-public class ExampleDAO extends AbstractBaseDAO<TestData, Long> implements DAOInterface<TestData, Long> {
+public class ExampleDAO extends AbstractBaseDAO<TestData, Long>
+        implements DAOInterface<TestData, Long> {
 
     /**
      * Finds records with pagination support.
@@ -54,9 +54,8 @@ public class ExampleDAO extends AbstractBaseDAO<TestData, Long> implements DAOIn
     }
 
     /**
-     * Gets a list of all records but loading into memory only 250 records.This
-     * is ideal for traversing millions of records from the database without
-     * causing overhead.
+     * Gets a list of all records but loading into memory only 250 records.This is ideal for
+     * traversing millions of records from the database without causing overhead.
      *
      * @return An iterator over TestData records.
      */
@@ -70,7 +69,6 @@ public class ExampleDAO extends AbstractBaseDAO<TestData, Long> implements DAOIn
                 return find(sql, params, TestData.class, limit, offset);
             }
         };
-
     }
 
     public Iterator<TestData> findQueryIteratorWithSQLQueryDynamicDefaultLimit() {
@@ -78,7 +76,6 @@ public class ExampleDAO extends AbstractBaseDAO<TestData, Long> implements DAOIn
         query.setOrderBy("pk_test_data");
         return super.findQueryIterator(query);
     }
-
 
     public Iterator<TestData> findQueryIteratorWithSQLQueryDynamicDefaultLimit5() {
         SQLQueryDynamic query = new SQLQueryDynamic(TestData.class);

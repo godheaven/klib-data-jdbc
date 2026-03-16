@@ -30,5 +30,4 @@ public interface CustomEngine {
     String createSqlNextval(String sequence);
 
     String prepareSQL2Engine(String sql);
-
 }

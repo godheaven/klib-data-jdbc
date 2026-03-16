@@ -23,7 +23,6 @@
  */
 package cl.kanopus.jdbc.entity.enums;
 
-
 public enum JoinOperator {
     INNER_JOIN,
     LEFT_JOIN,

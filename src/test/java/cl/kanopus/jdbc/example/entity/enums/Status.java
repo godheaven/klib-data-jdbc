@@ -27,9 +27,7 @@ package cl.kanopus.jdbc.example.entity.enums;
 import cl.kanopus.common.enums.EnumIdentifiable;
 
 /**
- *
  * @author Pablo Diaz Saavedra
- *
  */
 public enum Status implements EnumIdentifiable<String> {
     ERROR,
@@ -39,5 +37,4 @@ public enum Status implements EnumIdentifiable<String> {
     public String getId() {
         return this.name();
     }
-
 }

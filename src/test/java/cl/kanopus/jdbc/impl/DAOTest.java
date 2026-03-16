@@ -2,7 +2,7 @@
  * !--
  * For support and inquiries regarding this library, please contact:
  *   soporte@kanopus.cl
- * 
+ *
  * Project website:
  *   https://www.kanopus.cl
  * %%
@@ -11,9 +11,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,8 @@ public interface DAOTest extends DAOInterface<TestData, Long> {
 
     <I extends Mapping> List<I> find(String sql, HashMap<String, ?> params, Class<I> clazz);
 
-    <I extends Mapping> List<I> find(String sql, HashMap<String, ?> params, Class<I> clazz, int limit, int offset);
+    <I extends Mapping> List<I> find(
+            String sql, HashMap<String, ?> params, Class<I> clazz, int limit, int offset);
 
     List<String> findStrings(String sql, HashMap<String, ?> params);
 
@@ -51,5 +52,4 @@ public interface DAOTest extends DAOInterface<TestData, Long> {
     List<?> find(SQLQueryDynamic sqlQuery);
 
     List findAll(Class clazz);
-
 }

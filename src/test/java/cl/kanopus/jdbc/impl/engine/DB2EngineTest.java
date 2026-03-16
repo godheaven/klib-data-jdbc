@@ -34,7 +34,8 @@ class DB2EngineTest {
 
         // Test with limit and offset
         String result = DB2Engine.getInstance().createSqlPagination(sql, 10, 20).toString();
-        Assertions.assertEquals("SELECT * FROM table OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY", result);
+        Assertions.assertEquals(
+                "SELECT * FROM table OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY", result);
 
         // Test with limit only
         String result2 = DB2Engine.getInstance().createSqlPagination(sql, 10, 0).toString();

@@ -25,15 +25,12 @@ package cl.kanopus.jdbc.util.parser;
 
 import cl.kanopus.common.util.GsonUtils;
 import com.google.gson.reflect.TypeToken;
-
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
  * @author Pablo Diaz Saavedra
- *
  */
 public abstract class JsonListParser {
 
@@ -48,7 +45,5 @@ public abstract class JsonListParser {
             result = (T) new ArrayList<T>();
         }
         return result;
-
     }
-
 }

@@ -25,10 +25,9 @@ package cl.kanopus.jdbc.impl.engine;
 
 public class PostgresEngine implements CustomEngine {
 
-    protected PostgresEngine() {
-    }
+    protected PostgresEngine() {}
 
-    //Singleton Instance
+    // Singleton Instance
     private static class SingletonHolder {
 
         public static final PostgresEngine INSTANCE = new PostgresEngine();
@@ -58,5 +57,4 @@ public class PostgresEngine implements CustomEngine {
     public String prepareSQL2Engine(String sql) {
         return sql;
     }
-
 }

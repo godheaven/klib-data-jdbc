@@ -1,5 +1,5 @@
-<p align="left">
-  <img src="https://www.kanopus.cl/assets/kanopus_black.png" width="220"/>
+<p style="text-align:left">
+  <img src="https://www.kanopus.cl/assets/kanopus_black.png" width="220" alt="Kanopus logo"/>
 </p>
 
 ![Maven](https://img.shields.io/maven-central/v/cl.kanopus.util/klib-data-jdbc) ![License](https://img.shields.io/badge/license-Apache%20License%202.0-blue) ![Java](https://img.shields.io/badge/java-17+-orange)
@@ -36,23 +36,23 @@ Currently this library has support for the following database engines:
 Add the dependency to your `pom.xml`:
 
 ```xml
+
 <dependency>
-    <groupId>cl.kanopus.util</groupId>
-    <artifactId>klib-data-jdbc</artifactId>
-    <version>4.03.0</version>
+	<groupId>cl.kanopus.util</groupId>
+	<artifactId>klib-data-jdbc</artifactId>
+	<version>4.03.1</version>
 </dependency>
 ```
 
 ## 🚀 Usage Guide
-
 
 Quick start (high-level):
 
 - Annotate your Java classes with `@Table` and each mapped field with `@Column` (or use `@ColumnGroup` / `@JoinTable`
   for nested/grouped mappings).
 - Create a DAO by extending `AbstractBaseDAO<Entity, ID>` and (optionally) implement `DAOInterface`.
-- Use DAO methods to perform common operations: `getByID(id)`, `persist(entity)`, `deleteByID(id)`, `find(...)`,
-  `findPaginator(...)`, and `generateID()` for manual id generation.
+- Use DAO methods to perform common operations: `getById(id)`, `persist(entity)`, `deleteById(id)`, `find(...)`,
+  `findPaginator(...)`, and `generateId()` for manual id generation.
 - For dynamic queries use `SQLQueryDynamic`. For streaming large result sets use `QueryIterator`.
 
 Minimal example (conceptual):
@@ -72,7 +72,7 @@ public class TestType extends Mapping {
 // DAO usage (inside a Spring @Repository)
 public class TestTypeDAO extends AbstractBaseDAO<TestType, Long> implements DAOInterface<TestType, Long> {
     public TestType get(long id) {
-        return getByID(id);
+        return getById(id);
     }
 
     public void save(TestType t) {
@@ -84,7 +84,6 @@ public class TestTypeDAO extends AbstractBaseDAO<TestType, Long> implements DAOI
 When running tests or integrating with a Spring application, configure a `DataSource` (see
 `test/config/TestDataSourceConfig.java`) and include the proper JDBC driver for your database (
 Postgres/Oracle/SQLServer).
-
 
 1. Simple mapping
 
@@ -341,7 +340,7 @@ public class ExampleService {
         Paginator<TestData> records = dao.findWithPaginator(searcher);
         for (TestData data : records.getRecords()) {
             //Print data here
-            System.out.printlm(data);
+            System.out.println(data);
         }
     }
 
@@ -351,19 +350,19 @@ public class ExampleService {
         while (iterator.hasNext()) {
             TestData data = iterator.next();
             //Print data here
-            System.out.printlm(data);
+            System.out.println(data);
         }
     }
 
     @Test
-    public void exampleGetByID() {
-        TestData entity = dao.getByID((long) 1);
+    public void examplegetById() {
+        TestData entity = dao.getById((long) 1);
         Assertions.assertNotNull(entity);
     }
 
     @Test
-    public void exampleDeleteByID() {
-        int affected = dao.deleteByID((long) 35345345);
+    public void exampledeleteById() {
+        int affected = dao.deleteById((long) 35345345);
         Assertions.assertTrue(affected == 0);
     }
 
@@ -396,7 +395,7 @@ public class ExampleService {
 
         dao.persist(entity);
 
-        TestData entityWithIdZero = dao.getByID((long) 0);
+        TestData entityWithIdZero = dao.getById((long) 0);
         Assertions.assertNull(entityWithIdZero);
     }
 
@@ -431,7 +430,7 @@ public class ExampleService {
         group.setText("Data Example");
 
         TestData entity = new TestData();
-        entity.setId(dao.generateID());
+        entity.setId(dao.generateId());
         entity.setColor(Color.RED);
         entity.setSystemId(342);
         entity.setLoginId("test");
@@ -446,7 +445,7 @@ public class ExampleService {
         entity.setJsonList(jsonDataList);
         dao.persist(entity);
 
-        TestData entityWithId = dao.getByID(entity.getId());
+        TestData entityWithId = dao.getById(entity.getId());
         Assertions.assertNotNull(entityWithId);
     }
 }
@@ -457,7 +456,8 @@ public class ExampleService {
 
 ⭐**Pablo Andrés Díaz Saavedra** — Founder of **Kanopus – Software Guided by the Stars**⭐
 
-Kanopus is building a constellation of developers creating tools, libraries and platforms that simplify software engineering.
+Kanopus is building a constellation of developers creating tools, libraries and platforms that simplify software
+engineering.
 
 [GitHub](https://github.com/godheaven) | [LinkedIn](https://www.linkedin.com/in/pablo-diaz-saavedra-4b7b0522/) | [Website](https://kanopus.cl)
 

@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>cl.kanopus</groupId>
 		<artifactId>kanopus-boot-parent</artifactId>
-		<version>4.03.0</version>
+		<version>4.03.1</version>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>

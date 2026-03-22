@@ -29,8 +29,6 @@ import cl.kanopus.jdbc.entity.Mapping;
 import cl.kanopus.jdbc.entity.annotation.*;
 import cl.kanopus.jdbc.entity.mapper.AbstractRowMapper;
 import cl.kanopus.jdbc.util.parser.*;
-
-import javax.crypto.BadPaddingException;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -44,12 +42,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.crypto.BadPaddingException;
 
 /**
  * @author Pablo Diaz Saavedra
- * <p>This utility class is responsible for creating the "RowMapper" dynamically according to
- * the specified class and stores its definition in the application's CACHE, to increase the
- * response speed in each conversion process from ResultSet to Objects.
+ *     <p>This utility class is responsible for creating the "RowMapper" dynamically according to
+ *     the specified class and stores its definition in the application's CACHE, to increase the
+ *     response speed in each conversion process from ResultSet to Objects.
  */
 @SuppressWarnings("all")
 public class JdbcCache {
@@ -227,7 +226,7 @@ public class JdbcCache {
                                                         object,
                                                         column.encrypted()
                                                                 ? CryptographyUtils.decrypt(
-                                                                (String) columnObject)
+                                                                        (String) columnObject)
                                                                 : columnObject);
                                             }
                                         }
@@ -256,7 +255,7 @@ public class JdbcCache {
                                                 }
                                                 if (ex.getCause().getCause() != null
                                                         && ex.getCause().getCause().getClass()
-                                                        == BadPaddingException.class) {
+                                                                == BadPaddingException.class) {
                                                     throw new SQLException(
                                                             columnMapping.result().getName()
                                                                     + " cannot be decrypted using security key",
@@ -284,7 +283,7 @@ public class JdbcCache {
                                                     // solo en ciertas condiciones -->    throw ex;
                                                     if (ex.getCause().getCause() != null
                                                             && ex.getCause().getCause().getClass()
-                                                            == BadPaddingException.class) {
+                                                                    == BadPaddingException.class) {
                                                         throw new SQLException(
                                                                 columnMapping.result().getName()
                                                                         + " cannot be decrypted using security key",
@@ -335,11 +334,12 @@ public class JdbcCache {
             tableName = null;
         }
 
-
         for (Field field : clazz.getDeclaredFields()) {
             Column column = field.getAnnotation(Column.class);
             if (column != null) {
-                translationMap.put(prefix + field.getName(), tableName != null ? tableName + "." + column.name() : column.name());
+                translationMap.put(
+                        prefix + field.getName(),
+                        tableName != null ? tableName + "." + column.name() : column.name());
             } else {
                 ColumnGroup columnMapping = field.getAnnotation(ColumnGroup.class);
                 if (columnMapping != null) {

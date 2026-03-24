@@ -39,8 +39,9 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@View("SELECT * FROM (select d.td_login_id, d.td_color_id, d.td_date FROM tmp_test_data d INNER JOIN " +
-        "tmp_test_type t ON d.fk_test_type = t.pk_test_type) AS subquery")
+@View(
+        "SELECT * FROM (select d.td_login_id, d.td_color_id, d.td_date FROM tmp_test_data d INNER JOIN "
+                + "tmp_test_type t ON d.fk_test_type = t.pk_test_type) AS subquery")
 public class TestViewSubqueryData extends Mapping {
 
     @Column(name = "td_login_id", length = 10)
@@ -48,5 +49,4 @@ public class TestViewSubqueryData extends Mapping {
 
     @Column(name = "td_color_id", parser = EnumParser.class, parserResult = Color.class)
     private Color color;
-
 }

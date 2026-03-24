@@ -32,7 +32,6 @@ import cl.kanopus.jdbc.entity.enums.JoinOperator;
 import cl.kanopus.jdbc.util.extension.DataType;
 import cl.kanopus.jdbc.util.extension.GroupCondition;
 import cl.kanopus.jdbc.util.extension.OrderBy;
-
 import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -385,7 +384,7 @@ public class SQLQueryDynamic {
     }
 
     public void addConditionLikesSmart(String column, String value) {
-        addConditionLikesSmart(new String[]{column}, value, " ");
+        addConditionLikesSmart(new String[] {column}, value, " ");
     }
 
     public void addConditionLikesSmart(String[] columns, String value) {
@@ -494,7 +493,7 @@ public class SQLQueryDynamic {
                             break;
                         case IN:
                             if (!(values[i] instanceof Object[])) {
-                                addConditionIn(Operator.OR, columnName, new Object[]{values[i]});
+                                addConditionIn(Operator.OR, columnName, new Object[] {values[i]});
                             } else {
                                 addConditionIn(Operator.OR, columnName, (Object[]) values[i]);
                             }
@@ -597,7 +596,7 @@ public class SQLQueryDynamic {
     public void addConditionJson(String column, String expression, Object value) {
         boolean apply = checkToApply(value);
         if (apply) {
-            addConditionJson(column, expression, new Object[]{value});
+            addConditionJson(column, expression, new Object[] {value});
         }
     }
 
@@ -643,8 +642,8 @@ public class SQLQueryDynamic {
         boolean desc = (sortOrder == SortOrder.DESCENDING);
 
         String columnName = getRealName(column);
-        sqlOrderBy = new String[]{columnName};
-        sqlOrderByDesc = new boolean[]{desc};
+        sqlOrderBy = new String[] {columnName};
+        sqlOrderByDesc = new boolean[] {desc};
     }
 
     public final void setOrderBy(String columns[], SortOrder[] sortOrders) {
@@ -921,7 +920,7 @@ public class SQLQueryDynamic {
                     addConditionIn(
                             Operator.AND,
                             condition.getColumn(),
-                            new Object[]{condition.getValue()});
+                            new Object[] {condition.getValue()});
                 } else {
                     addConditionIn(
                             Operator.AND, condition.getColumn(), (Object[]) condition.getValue());
@@ -972,8 +971,8 @@ public class SQLQueryDynamic {
 
         if (condition.getDataType() == DataType.DATE
                 && !(condition.getValue() instanceof Date
-                || condition.getValue() instanceof LocalDate
-                || condition.getValue() instanceof List)) {
+                        || condition.getValue() instanceof LocalDate
+                        || condition.getValue() instanceof List)) {
             throw new IllegalArgumentException(
                     "QueryDynamic: DataType.DATE cannot be applied to " + condition.getValue());
         }
@@ -993,10 +992,11 @@ public class SQLQueryDynamic {
             String columnName = args[1];
 
             if (aliasMap.containsKey(tableName)) {
-                //The table name has an alias, so we replace it in the column name
+                // The table name has an alias, so we replace it in the column name
                 return aliasMap.get(tableName) + "." + columnName;
             } else {
-                //There is not a alias generated automatically for the table, so we return the column name with the original table name
+                // There is not a alias generated automatically for the table, so we return the
+                // column name with the original table name
                 return fullColumnName;
             }
 

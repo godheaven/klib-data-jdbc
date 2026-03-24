@@ -11,6 +11,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cl.kanopus.util</groupId>
 	<artifactId>klib-data-jdbc</artifactId>
+	<version>4.04.1</version>
 	<packaging>jar</packaging>
 	<name>klib-data-jdbc</name>
 

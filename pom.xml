@@ -5,13 +5,12 @@
 	<parent>
 		<groupId>cl.kanopus</groupId>
 		<artifactId>kanopus-boot-parent</artifactId>
-		<version>4.04.0</version>
+		<version>4.05.0</version>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cl.kanopus.util</groupId>
 	<artifactId>klib-data-jdbc</artifactId>
-	<version>4.04.1</version>
 	<packaging>jar</packaging>
 	<name>klib-data-jdbc</name>
 

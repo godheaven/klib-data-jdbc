@@ -30,16 +30,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This abstract class must be implemented by all Java class that represents a database table, is
- * equivalent to an Entity Object.
+ * This abstract class must be implemented by all Java class that represents a database table, is equivalent to an Entity Object.
  */
 public abstract class Mapping implements Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Mapping.class);
 
-    protected void prePersist() {}
+    protected void prePersist() {
+    }
 
-    protected void preUpdate() {}
+    protected void preUpdate() {
+    }
 
     @Override
     public String toString() {
@@ -52,8 +53,7 @@ public abstract class Mapping implements Serializable {
         StringBuilder aux = new StringBuilder("Class : [" + this.getClass().getName() + "]\n");
         Object obj;
         for (int i = 0; i < methods.length; i++) {
-            if (methods[i].getName().startsWith("get")
-                    && !methods[i].getName().equals("getClass")) {
+            if (methods[i].getName().startsWith("get") && !methods[i].getName().equals("getClass")) {
                 try {
                     method = methods[i];
                     obj = method.invoke(this, (Object[]) null);
@@ -62,15 +62,9 @@ public abstract class Mapping implements Serializable {
                     } else {
                         result = null;
                     }
-                    aux.append(method.getName().substring(3))
-                            .append(" : [")
-                            .append(result)
-                            .append("]\n");
+                    aux.append(method.getName().substring(3)).append(" : [").append(result).append("]\n");
 
-                } catch (SecurityException
-                        | IllegalArgumentException
-                        | InvocationTargetException
-                        | IllegalAccessException ex) {
+                } catch (SecurityException | IllegalArgumentException | InvocationTargetException | IllegalAccessException ex) {
                     LOGGER.error(ex.getMessage(), ex);
                 }
             }

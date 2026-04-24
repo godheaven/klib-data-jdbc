@@ -53,7 +53,8 @@ public class GroupCondition {
 
     public static class Condition {
 
-        public Condition() {}
+        public Condition() {
+        }
 
         public Condition(String column, Object value, DataType dataType, MatchMode matchMode) {
             this.column = column;

@@ -38,8 +38,7 @@ import org.springframework.stereotype.Repository;
 public class DAOTestImpl extends AbstractDAO<TestData, Long> implements DAOTest {
 
     @Autowired
-    @Qualifier("jdbcTemplateTest")
-    private NamedParameterJdbcTemplate jdbcTemplate;
+    @Qualifier("jdbcTemplateTest") private NamedParameterJdbcTemplate jdbcTemplate;
 
     @Override
     protected NamedParameterJdbcTemplate getJdbcTemplate() {
@@ -77,8 +76,7 @@ public class DAOTestImpl extends AbstractDAO<TestData, Long> implements DAOTest 
     }
 
     @Override
-    public <I extends Mapping> List<I> find(
-            String sql, HashMap<String, ?> params, Class<I> clazz, int limit, int offset) {
+    public <I extends Mapping> List<I> find(String sql, HashMap<String, ?> params, Class<I> clazz, int limit, int offset) {
         return super.find(sql, params, clazz, limit, offset);
     }
 

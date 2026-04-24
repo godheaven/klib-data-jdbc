@@ -40,10 +40,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * Entity class representing the 'tmp_test_data' view. This class is used to map the database view
- * to a Java object. It includes fields for various data types, including enums and JSON data. The
- * class is annotated with Lombok annotations to generate boilerplate code such as getters, setters,
- * equals, and hashCode methods.
+ * Entity class representing the 'tmp_test_data' view. This class is used to map the database view to a Java object. It includes fields for various data types, including enums and JSON data. The class is annotated with Lombok annotations to generate boilerplate code such as getters, setters, equals,
+ * and hashCode methods.
  */
 @Data
 @EqualsAndHashCode(callSuper = false)

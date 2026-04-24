@@ -24,7 +24,8 @@
 package cl.kanopus.jdbc.entity.annotation;
 
 public final class AnnotationDefaults {
-    private AnnotationDefaults() {}
+    private AnnotationDefaults() {
+    }
 
     public static final String UNASSIGNED = "[unassigned]";
 }

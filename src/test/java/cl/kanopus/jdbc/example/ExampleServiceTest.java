@@ -49,9 +49,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ExtendWith(SpringExtension.class)
 class ExampleServiceTest {
 
-    @Autowired private ExampleDAO dao;
+    @Autowired
+    private ExampleDAO dao;
 
-    @Autowired private ApplicationContext applicationContext;
+    @Autowired
+    private ApplicationContext applicationContext;
 
     @BeforeEach
     void initDao() {
@@ -128,8 +130,7 @@ class ExampleServiceTest {
         group.setText("Data Example");
 
         TestData entity = new TestData();
-        entity.setId(
-                0); // If this field is Zero and serial = true, will no be included into SQL persist
+        entity.setId(0); // If this field is Zero and serial = true, will no be included into SQL persist
         entity.setColor(Color.RED);
         entity.setSystemId(342);
         entity.setLoginId("test");

@@ -25,7 +25,8 @@ package cl.kanopus.jdbc.impl.engine;
 
 public class OracleEngine implements CustomEngine {
 
-    protected OracleEngine() {}
+    protected OracleEngine() {
+    }
 
     // Singleton Instance
     private static class SingletonHolder {

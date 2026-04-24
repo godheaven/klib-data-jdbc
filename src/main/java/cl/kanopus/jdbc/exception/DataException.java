@@ -30,7 +30,8 @@ import org.springframework.dao.DataAccessException;
 @Getter
 public class DataException extends DataAccessException {
 
-    @Serial private static final long serialVersionUID = 1L;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     private final String error;
 

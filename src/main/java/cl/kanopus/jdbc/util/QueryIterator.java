@@ -29,11 +29,10 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * This class allows queries to the database using automatic pagination. The main objective of this
- * class is to run queries that return a huge quantity of records, avoiding problems of memory
- * consumption.
+ * This class allows queries to the database using automatic pagination. The main objective of this class is to run queries that return a huge quantity of records, avoiding problems of memory consumption.
  *
- * <p>This class is only kept in memory {limit} records set and not the whole entire resultset.
+ * <p>
+ * This class is only kept in memory {limit} records set and not the whole entire resultset.
  *
  * @author Pablo Diaz Saavedra
  */
@@ -45,7 +44,8 @@ public abstract class QueryIterator<T> implements Iterator<T> {
     private Iterator<T> iterator = list.iterator();
     private boolean execute = true;
 
-    protected QueryIterator() {}
+    protected QueryIterator() {
+    }
 
     protected QueryIterator(int limit) {
         this.limit = limit;

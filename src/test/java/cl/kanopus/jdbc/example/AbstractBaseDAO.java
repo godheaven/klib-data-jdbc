@@ -30,14 +30,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 /**
- * This abstract class defines methods for data access that are common, generally, all kinds of data
- * access DAO must implement this class.Thus it is given safely access the Connection database.The
- * JdbcTemplate property is kept private and gives access to the database through the methods
- * implemented in this AbstractDAO.
+ * This abstract class defines methods for data access that are common, generally, all kinds of data access DAO must implement this class.Thus it is given safely access the Connection database.The JdbcTemplate property is kept private and gives access to the database through the methods implemented
+ * in this AbstractDAO.
  */
 public abstract class AbstractBaseDAO<T extends Mapping, I> extends AbstractDAO<T, I> {
 
-    @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
+    @Autowired
+    private NamedParameterJdbcTemplate jdbcTemplate;
 
     @Override
     protected NamedParameterJdbcTemplate getJdbcTemplate() {

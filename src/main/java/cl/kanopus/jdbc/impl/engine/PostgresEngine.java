@@ -25,7 +25,8 @@ package cl.kanopus.jdbc.impl.engine;
 
 public class PostgresEngine implements CustomEngine {
 
-    protected PostgresEngine() {}
+    protected PostgresEngine() {
+    }
 
     // Singleton Instance
     private static class SingletonHolder {

@@ -36,15 +36,16 @@ import java.util.List;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class ExampleDAO extends AbstractBaseDAO<TestData, Long>
-        implements DAOInterface<TestData, Long> {
+public class ExampleDAO extends AbstractBaseDAO<TestData, Long> implements DAOInterface<TestData, Long> {
 
     /**
      * Finds records with pagination support.
      *
-     * @param searcher Search criteria including limit and offset.
+     * @param searcher
+     *            Search criteria including limit and offset.
      * @return A Paginator object containing the results.
-     * @throws DataException If a data access error occurs.
+     * @throws DataException
+     *             If a data access error occurs.
      */
     public Paginator<TestData> findWithPaginator(Searcher searcher) throws DataException {
         SQLQueryDynamic query = new SQLQueryDynamic(TestData.class);
@@ -54,8 +55,7 @@ public class ExampleDAO extends AbstractBaseDAO<TestData, Long>
     }
 
     /**
-     * Gets a list of all records but loading into memory only 250 records.This is ideal for
-     * traversing millions of records from the database without causing overhead.
+     * Gets a list of all records but loading into memory only 250 records.This is ideal for traversing millions of records from the database without causing overhead.
      *
      * @return An iterator over TestData records.
      */

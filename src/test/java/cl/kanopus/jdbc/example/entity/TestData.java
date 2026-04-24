@@ -41,17 +41,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * Entity class representing the 'tmp_test_data' table. This class is used to map the database table
- * to a Java object. It includes fields for various data types, including enums and JSON data. The
- * class is annotated with Lombok annotations to generate boilerplate code such as getters, setters,
+ * Entity class representing the 'tmp_test_data' table. This class is used to map the database table to a Java object. It includes fields for various data types, including enums and JSON data. The class is annotated with Lombok annotations to generate boilerplate code such as getters, setters,
  * equals, and hashCode methods.
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@Table(
-        name = "tmp_test_data",
-        sequence = "tmp_test_data_pk_test_data_seq",
-        keys = {"pk_test_data"})
+@Table(name = "tmp_test_data", sequence = "tmp_test_data_pk_test_data_seq", keys = {"pk_test_data"})
 public class TestData extends Mapping {
 
     @Column(name = "pk_test_data", serial = true)

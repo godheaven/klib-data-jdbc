@@ -33,7 +33,8 @@ public class SQLServerEngine implements CustomEngine {
 
     final Pattern pattern = Pattern.compile("([\\\\.a-zA-Z0-9_-]+)::date", Pattern.MULTILINE);
 
-    protected SQLServerEngine() {}
+    protected SQLServerEngine() {
+    }
 
     // Singleton Instance
     private static class SingletonHolder {

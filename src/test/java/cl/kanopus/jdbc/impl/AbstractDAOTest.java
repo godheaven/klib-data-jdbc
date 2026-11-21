@@ -208,7 +208,9 @@ class AbstractDAOTest {
 
     @Test
     void testUpdate() throws Exception {
-        long id = 1;
+        // update a row created by this test: the seed rows are shared with other tests
+        long id = daoTest.queryForLong("INSERT INTO tmp_test_data(td_system_id, td_login_id, td_date, td_local_date, td_local_date_time, td_text, td_status, fk_test_type) "
+                + "VALUES (1, 'upd-test', now(), current_date, now(), 'update test', 'SUCCESS', 1) RETURNING pk_test_data", new HashMap<>());
 
         TestData test = new TestData();
         test.setId(id);

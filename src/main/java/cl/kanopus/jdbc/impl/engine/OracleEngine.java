@@ -23,7 +23,12 @@
  */
 package cl.kanopus.jdbc.impl.engine;
 
+import cl.kanopus.jdbc.util.SqlUtils;
+import java.util.regex.Pattern;
+
 public class OracleEngine implements CustomEngine {
+
+    private static final Pattern CAST_DATE = Pattern.compile("([\\\\.a-zA-Z0-9_-]+)::date", Pattern.CASE_INSENSITIVE);
 
     protected OracleEngine() {
     }
@@ -58,8 +63,16 @@ public class OracleEngine implements CustomEngine {
         return "SELECT " + sequence + ".nextval FROM dual";
     }
 
+    /**
+     * In Oracle {@code CAST(timestamp AS DATE)} keeps the time part, {@code TRUNC} is used instead.
+     */
+    @Override
+    public String castToDate(String column) {
+        return "TRUNC(" + column + ")";
+    }
+
     @Override
     public String prepareSQL2Engine(String sql) {
-        return sql;
+        return SqlUtils.transformOutsideLiterals(sql, code -> CAST_DATE.matcher(code).replaceAll("TRUNC($1)"));
     }
 }

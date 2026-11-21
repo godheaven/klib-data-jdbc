@@ -23,10 +23,15 @@
  */
 package cl.kanopus.jdbc.impl.engine;
 
+import cl.kanopus.jdbc.util.SqlUtils;
+import java.util.regex.Pattern;
+
 /**
  * @author Pablo Diaz Saavedra
  */
 public class DB2Engine implements CustomEngine {
+
+    private static final Pattern CAST_DATE = Pattern.compile("([\\\\.a-zA-Z0-9_-]+)::date", Pattern.CASE_INSENSITIVE);
 
     protected DB2Engine() {
     }
@@ -59,6 +64,6 @@ public class DB2Engine implements CustomEngine {
 
     @Override
     public String prepareSQL2Engine(String sql) {
-        return sql;
+        return SqlUtils.transformOutsideLiterals(sql, code -> CAST_DATE.matcher(code).replaceAll("CAST($1 AS DATE)"));
     }
 }

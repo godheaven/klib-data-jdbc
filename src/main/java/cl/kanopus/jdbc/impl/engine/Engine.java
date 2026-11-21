@@ -23,9 +23,24 @@
  */
 package cl.kanopus.jdbc.impl.engine;
 
+/**
+ * Supported database engines.
+ */
 public enum Engine {
     ORACLE,
     POSTGRES,
     SQLSERVER,
-    DB2
+    DB2;
+
+    /**
+     * @return the SQL dialect implementation for this engine
+     */
+    public CustomEngine getCustomEngine() {
+        return switch (this) {
+            case ORACLE -> OracleEngine.getInstance();
+            case POSTGRES -> PostgresEngine.getInstance();
+            case SQLSERVER -> SQLServerEngine.getInstance();
+            case DB2 -> DB2Engine.getInstance();
+        };
+    }
 }

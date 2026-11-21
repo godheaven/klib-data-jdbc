@@ -245,30 +245,31 @@ class AbstractDAOTest {
     @Test
     void testFind_String_HashMap() {
         HashMap<String, String> params = new HashMap<>();
-        String sql = "SELECT pk_test_data_history FROM tmp_test_data_history limit 1";
+        String sql = "SELECT * FROM tmp_test_data limit 1";
 
         List<TestData> result = daoTest.find(sql, params);
-        Assertions.assertNotNull(result);
+        Assertions.assertEquals(1, result.size());
     }
 
     @Test
     void testFind_String_HashMap_Class() {
         HashMap<String, String> params = new HashMap<>();
-        String sql = "SELECT pk_test_data_history FROM tmp_test_data_history limit 1";
+        String sql = "SELECT pk_test_data_history, fk_test_data, info FROM tmp_test_data_history limit 1";
 
         List<TestDataHistory> result = (List<TestDataHistory>) daoTest.find(sql, params, TestDataHistory.class);
-        Assertions.assertNotNull(result);
+        Assertions.assertEquals(1, result.size());
+        Assertions.assertNotNull(result.get(0).getInfo());
     }
 
     @Test
     void testFind_String_HashMap_Class_Limit_Offset() {
         HashMap<String, String> params = new HashMap<>();
-        String sql = "SELECT pk_test_data_history FROM tmp_test_data_history";
+        String sql = "SELECT pk_test_data_history, fk_test_data, info FROM tmp_test_data_history ORDER BY pk_test_data_history";
 
         int limit = 1;
         int offset = 2;
         List<TestDataHistory> result = (List<TestDataHistory>) daoTest.find(sql, params, TestDataHistory.class, limit, offset);
-        Assertions.assertNotNull(result);
+        Assertions.assertEquals(1, result.size());
     }
 
     @Test

@@ -53,4 +53,15 @@ class DB2EngineTest {
         String result = DB2Engine.getInstance().prepareSQL2Engine(sql);
         Assertions.assertEquals(sql, result);
     }
+
+    @Test
+    void testPrepareSQL2EngineTranslatesDateCast() {
+        DB2Engine engine = DB2Engine.getInstance();
+        Assertions.assertEquals("SELECT * FROM t WHERE CAST(t1.c AS DATE) >= :p AND x = 'a::date' AND n LIKE '%'||:q",
+                engine.prepareSQL2Engine("SELECT * FROM t WHERE t1.c::date >= :p AND x = 'a::date' AND n LIKE '%'||:q"));
+        Assertions.assertEquals("CAST(c AS DATE)", engine.castToDate("c"));
+        Assertions.assertEquals("TO_TIMESTAMP(:p, 'YYYY-MM-DD HH24:MI:SS')", engine.toTimestamp("p", CustomEngine.DATETIME_PATTERN));
+        Assertions.assertEquals("a||b", engine.concat("a", "b"));
+        Assertions.assertSame(engine, Engine.DB2.getCustomEngine());
+    }
 }

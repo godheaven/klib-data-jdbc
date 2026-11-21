@@ -1,0 +1,13 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    uses: godheaven/kanopus-core-parent/.github/workflows/maven-build.yml@main
+    with:
+      postgres: true
+      db-init-script: src/test/resources/schema.sql

@@ -23,6 +23,7 @@
  */
 package cl.kanopus.jdbc.impl.engine;
 
+import cl.kanopus.jdbc.util.SqlUtils;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,6 +33,11 @@ import java.util.regex.Pattern;
 public class SQLServerEngine implements CustomEngine {
 
     final Pattern pattern = Pattern.compile("([\\\\.a-zA-Z0-9_-]+)::date", Pattern.MULTILINE);
+
+    private static final Pattern COUNT = Pattern.compile("(?i)count\\(\\s*\\*\\s*\\)");
+    private static final Pattern TO_TIMESTAMP_DATETIME = Pattern.compile("(?i)TO_TIMESTAMP\\(\\s*(:[\\w.]+)\\s*,\\s*'YYYY-MM-DD HH24:MI:SS'\\s*\\)");
+    private static final Pattern TO_TIMESTAMP_DATE = Pattern.compile("(?i)TO_TIMESTAMP\\(\\s*(:[\\w.]+)\\s*,\\s*'YYYY-MM-DD'\\s*\\)");
+    private static final Pattern DELETE_WITH_ALIAS = Pattern.compile("(?i)^\\s*DELETE\\s+FROM\\s+([\\w.$\\[\\]]+)\\s+(?!WHERE\\b)([\\w$]+)(\\s+WHERE\\b|\\s*$)");
 
     protected SQLServerEngine() {
     }
@@ -46,10 +52,16 @@ public class SQLServerEngine implements CustomEngine {
         return SingletonHolder.INSTANCE;
     }
 
+    /**
+     * SQL Server requires an ORDER BY clause to use OFFSET/FETCH; when the query has no top level ORDER BY, {@code ORDER BY (SELECT NULL)} is added.
+     */
     @Override
     public StringBuilder createSqlPagination(String sql, int limit, int offset) {
         StringBuilder sqlPagination = new StringBuilder();
         sqlPagination.append(sql);
+        if (SqlUtils.indexOfTopLevel(sql, "ORDER BY") < 0) {
+            sqlPagination.append(" ORDER BY (SELECT NULL)");
+        }
         sqlPagination.append(" offset ").append(offset);
         sqlPagination.append(" rows fetch next ").append(limit);
         sqlPagination.append(" rows only ");
@@ -62,13 +74,38 @@ public class SQLServerEngine implements CustomEngine {
     }
 
     @Override
-    public String prepareSQL2Engine(String sql) {
-        // Usar replace() en lugar de replaceAll() (no evalúa regex)
-        String newSql = sql.replace("||", "+");
+    public String toTimestamp(String parameterName, String pattern) {
+        return "CONVERT(DATETIME2, :" + parameterName + ", " + (DATE_PATTERN.equals(pattern) ? "23" : "120") + ")";
+    }
 
-        // Reemplazo de count(*) por count_big(*) sin importar mayúsculas/minúsculas
-        newSql = newSql.replaceAll("(?i)count\\(\\s*\\*\\s*\\)", "count_big(*)");
-        Matcher matcher = pattern.matcher(newSql);
-        return matcher.replaceAll("CAST($1 as date)");
+    @Override
+    public String concat(String... parts) {
+        return String.join("+", parts);
+    }
+
+    @Override
+    public String prepareSQL2Engine(String sql) {
+        if (sql == null) {
+            return null;
+        }
+        // TO_TIMESTAMP uses a literal as second argument, so it is translated before skipping literals
+        String newSql = TO_TIMESTAMP_DATETIME.matcher(sql).replaceAll("CONVERT(DATETIME2, $1, 120)");
+        newSql = TO_TIMESTAMP_DATE.matcher(newSql).replaceAll("CONVERT(DATETIME2, $1, 23)");
+
+        newSql = SqlUtils.transformOutsideLiterals(newSql, code -> {
+            // Usar replace() en lugar de replaceAll() (no evalúa regex)
+            String fragment = code.replace("||", "+");
+            // Reemplazo de count(*) por count_big(*) sin importar mayúsculas/minúsculas
+            fragment = COUNT.matcher(fragment).replaceAll("count_big(*)");
+            Matcher matcher = pattern.matcher(fragment);
+            return matcher.replaceAll("CAST($1 as date)");
+        });
+
+        // SQL Server does not accept "DELETE FROM table alias", it requires "DELETE alias FROM table alias"
+        Matcher delete = DELETE_WITH_ALIAS.matcher(newSql);
+        if (delete.find()) {
+            newSql = delete.replaceFirst("DELETE $2 FROM $1 $2$3");
+        }
+        return newSql;
     }
 }

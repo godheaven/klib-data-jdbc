@@ -29,12 +29,23 @@ import cl.kanopus.common.util.Utils;
 import cl.kanopus.jdbc.entity.Mapping;
 import cl.kanopus.jdbc.entity.annotation.Table;
 import cl.kanopus.jdbc.entity.enums.JoinOperator;
+import cl.kanopus.jdbc.exception.DataException;
+import cl.kanopus.jdbc.impl.engine.CustomEngine;
+import cl.kanopus.jdbc.impl.engine.Engine;
+import cl.kanopus.jdbc.impl.engine.PostgresEngine;
 import cl.kanopus.jdbc.util.extension.DataType;
 import cl.kanopus.jdbc.util.extension.GroupCondition;
 import cl.kanopus.jdbc.util.extension.OrderBy;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Time;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,10 +56,21 @@ import java.util.stream.Collectors;
  * For example: If we add a filter with the method addCondition(String column, Object value, String condition) Example 1) if the object attribute value is a string, the filter should be added only if the String is non-null and not equal to "". Example 2) if the object attribute value is a Integer or
  * Long or Float, the filter should be added only if the values is non-null and not equal to 0.
  *
+ * <p>
+ * Security: column names received by the condition and order methods must be either a property of the mapped class (e.g. {@code "group.text"}) or a plain SQL identifier matching {@link SqlUtils#IDENTIFIER}; anything else is rejected with {@link IllegalArgumentException}. Values are always bound as
+ * parameters. Raw SQL can only be added through {@link #addCustomCondition(String)}, which must never receive user input.
+ *
+ * <p>
+ * Instances are not thread safe; create a new instance per query.
+ *
  * @author Pablo Diaz Saavedra
  */
 @SuppressWarnings("all")
 public class SQLQueryDynamic {
+
+    private static final String VALUE_PLACEHOLDER = "${value}";
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter DATETIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     protected final StringBuilder sqlJoins = new StringBuilder();
     protected final StringBuilder sqlWhere = new StringBuilder();
@@ -69,7 +91,9 @@ public class SQLQueryDynamic {
     private boolean loadAll;
     private String prefixParam;
     private Map<String, String> propertiesTranslationMap;
-    private Map<String, String> aliasMap;
+    private Map<String, String> aliasMap = new HashMap<>();
+    private CustomEngine dialect = PostgresEngine.getInstance();
+    private Boolean selectHasWhere;
 
     private int indexJoins = 0;
 
@@ -86,12 +110,7 @@ public class SQLQueryDynamic {
     }
 
     public SQLQueryDynamic(Class<? extends Mapping> clazz) {
-        this.clazz = clazz;
-        JdbcCache.SqlBase base = JdbcCache.sqlBase(clazz);
-        this.sqlSelect = base.getSql();
-        this.aliasMap = base.getAliasMap();
-        this.propertiesTranslationMap = JdbcCache.translationMap(clazz);
-        this.prefixParam = Utils.generateRandomText(5);
+        this(clazz, false);
     }
 
     public SQLQueryDynamic(Class<? extends Mapping> clazz, boolean loadAll) {
@@ -99,9 +118,34 @@ public class SQLQueryDynamic {
         this.loadAll = loadAll;
         JdbcCache.SqlBase base = JdbcCache.sqlBase(clazz, loadAll);
         this.sqlSelect = base.getSql();
-        this.aliasMap = base.getAliasMap();
-        this.propertiesTranslationMap = JdbcCache.translationMap(clazz);
+        // defensive copies: joins added to this query must not leak into the shared cache
+        this.aliasMap = new HashMap<>(base.getAliasMap());
+        this.propertiesTranslationMap = new HashMap<>(JdbcCache.translationMap(clazz));
         this.prefixParam = Utils.generateRandomText(5);
+    }
+
+    /**
+     * Selects the SQL dialect used to render engine specific fragments (date casts, timestamp parsing and string concatenation). By default the PostgreSQL syntax is generated, which {@code AbstractDAO} translates for the other engines through {@link CustomEngine#prepareSQL2Engine(String)}.
+     *
+     * @param engine
+     *            the target engine
+     * @throws IllegalStateException
+     *             when conditions were already added
+     */
+    public void setEngine(Engine engine) {
+        setEngine(engine == null ? PostgresEngine.getInstance() : engine.getCustomEngine());
+    }
+
+    /**
+     * @param customEngine
+     *            the dialect implementation
+     * @see #setEngine(Engine)
+     */
+    public void setEngine(CustomEngine customEngine) {
+        if (index > 0) {
+            throw new IllegalStateException("The engine must be defined before adding conditions");
+        }
+        this.dialect = customEngine == null ? PostgresEngine.getInstance() : customEngine;
     }
 
     public boolean isLimited() {
@@ -114,6 +158,13 @@ public class SQLQueryDynamic {
 
     public boolean isLoadAll() {
         return loadAll;
+    }
+
+    /**
+     * @return {@code true} when at least one condition was applied to the WHERE clause
+     */
+    public boolean hasConditions() {
+        return index > 0 && sqlWhere.length() > 0;
     }
 
     public Class<? extends Mapping> getClazz() {
@@ -169,7 +220,7 @@ public class SQLQueryDynamic {
     }
 
     protected boolean hasToIncludeOperator() {
-        return (index > 0 && !sqlWhere.toString().endsWith("("));
+        return (index > 0 && sqlWhere.length() > 0 && sqlWhere.charAt(sqlWhere.length() - 1) != '(');
     }
 
     public long getTotalResultCount() {
@@ -185,25 +236,36 @@ public class SQLQueryDynamic {
     }
 
     public final void addJoinTable(JoinOperator joinOperator, String aliasJoin, Class<? extends Mapping> clazzJoin, String foreignKey) {
+        if (this.clazz == null) {
+            throw new IllegalStateException("addJoinTable requires a SQLQueryDynamic created from a mapped class");
+        }
+        if (aliasJoin != null && !aliasJoin.isEmpty() && (aliasJoin.contains(".") || !SqlUtils.IDENTIFIER.matcher(aliasJoin).matches())) {
+            throw new IllegalArgumentException("Invalid join alias: '" + aliasJoin + "'");
+        }
 
         // Primary Key
         Table table = this.clazz.getDeclaredAnnotation(Table.class);
+        if (table == null) {
+            throw new IllegalStateException("Error class " + this.clazz.getName() + " without @Table annotation");
+        }
         String alias = Utils.defaultValue(aliasMap.get(table.name()), "t1");
         if (table.keys().length == 0) {
-            throw new RuntimeException("Error Table " + table + " without primary key defined");
+            throw new IllegalStateException("Error Table " + table.name() + " without primary key defined");
         }
         String columnPrimaryKey = alias + "." + table.keys()[0];
 
         // Foreing Key
         Table tableJoin = clazzJoin.getDeclaredAnnotation(Table.class);
+        if (tableJoin == null) {
+            throw new IllegalStateException("Error class " + clazzJoin.getName() + " without @Table annotation");
+        }
         aliasJoin = generateJoinAlias(aliasJoin, tableJoin.name());
+        if (propertiesTranslationMap == null) {
+            propertiesTranslationMap = new HashMap<>();
+        }
         propertiesTranslationMap.putAll(prepareMapWithAlias(aliasJoin, JdbcCache.translationMap(clazzJoin)));
 
         String columnForeignKey = getRealName(aliasJoin + "." + foreignKey);
-
-        if (Utils.isNullOrEmpty(columnForeignKey)) {
-            throw new RuntimeException("Error JoinTable without foerign key " + columnForeignKey + " defined");
-        }
 
         sqlJoins.append(" ").append(joinOperator.toString().replace("_", " ")).append(" ").append(tableJoin.name());
         sqlJoins.append(" ").append(aliasJoin);
@@ -216,25 +278,29 @@ public class SQLQueryDynamic {
     }
 
     public final void addCustomParam(String name, Object value) {
-        if (value instanceof String) {
-            sqlParams.put(generateParameterName(name), ((String) value).toUpperCase());
-        } else if (value instanceof EnumIdentifiable) {
-            sqlParams.put(generateParameterName(name), ((EnumIdentifiable<?>) value).getId());
-        } else if (value instanceof Enum) {
-            sqlParams.put(generateParameterName(name), ((Enum<?>) value).name());
-        } else if (value instanceof Boolean) {
-            sqlParams.put(generateParameterName(name), ((Boolean) value));
-        } else {
-            sqlParams.put(generateParameterName(name), value);
-        }
+        sqlParams.put(generateParameterName(name), toParameterValue(value, true));
     }
 
+    /**
+     * Adds a raw SQL condition. <b>Never</b> build {@code customCondition} with user input: use named parameters and {@link #addCustomParam(String, Object)} instead.
+     *
+     * @param customCondition
+     *            raw SQL condition
+     * @param apply
+     *            whether the condition must be added
+     */
     public void addCustomCondition(String customCondition, boolean apply) {
         if (apply) {
             addCustomCondition(customCondition);
         }
     }
 
+    /**
+     * Adds a raw SQL condition. <b>Never</b> build {@code customCondition} with user input: use named parameters and {@link #addCustomParam(String, Object)} instead.
+     *
+     * @param customCondition
+     *            raw SQL condition
+     */
     public void addCustomCondition(String customCondition) {
         sqlWhere.append(hasToIncludeOperator() ? " AND " : "");
         sqlWhere.append(customCondition);
@@ -246,8 +312,9 @@ public class SQLQueryDynamic {
     }
 
     protected void addConditionIs(Operator operator, String column, IS is) {
+        String columnName = getRealName(column);
         sqlWhere.append(hasToIncludeOperator() ? operator.toSentence() : "");
-        sqlWhere.append(getRealName(column));
+        sqlWhere.append(columnName);
         sqlWhere.append(is);
         index++;
     }
@@ -263,6 +330,9 @@ public class SQLQueryDynamic {
     protected void addCondition(Operator operator, String column, Object value, Condition condition, boolean forceCondition) {
         boolean apply = (forceCondition) ? true : checkToApply(value);
         String columnName = getRealName(column);
+        if (condition == null) {
+            throw new IllegalArgumentException("QueryDynamic: condition is required");
+        }
 
         if (apply) {
             String parameterName = generateParameterName(columnName + "_" + index);
@@ -271,43 +341,53 @@ public class SQLQueryDynamic {
             if (value instanceof Date && condition == Condition.EQUAL) {
                 String parameterNameStart = generateParameterName(parameterName + "_start");
                 String parameterNameEnd = generateParameterName(parameterName + "_end");
-                String dateStr = Utils.getDateFormat((Date) value, "yyyy-MM-dd");
+                String dateStr = toLocalDate((Date) value).format(DATE_FORMAT);
 
                 sqlWhere.append(columnName);
-                sqlWhere.append(" BETWEEN TO_TIMESTAMP(:").append(parameterNameStart).append(", 'YYYY-MM-DD')"); // Postgresql
-                sqlWhere.append(" AND TO_TIMESTAMP(:").append(parameterNameEnd).append(", 'YYYY-MM-DD HH24:MI:SS')"); // Postgresql
+                sqlWhere.append(" BETWEEN ").append(dialect.toTimestamp(parameterNameStart, CustomEngine.DATE_PATTERN));
+                sqlWhere.append(" AND ").append(dialect.toTimestamp(parameterNameEnd, CustomEngine.DATETIME_PATTERN));
                 sqlParams.put(parameterNameStart, dateStr);
                 sqlParams.put(parameterNameEnd, dateStr + " 23:59:59");
             } else if (value instanceof Date || value instanceof LocalDate) {
-                sqlWhere.append(columnName).append("::date"); // Postgresql
+                sqlWhere.append(dialect.castToDate(columnName));
                 sqlWhere.append(condition);
                 sqlWhere.append(":").append(parameterName);
                 sqlParams.put(parameterName, value);
             } else if (value instanceof LocalDateTime) {
-                String datetimeStr = Utils.getDateTimeFormat((LocalDateTime) value, "yyyy-MM-dd HH:mm:ss");
+                String datetimeStr = ((LocalDateTime) value).format(DATETIME_FORMAT);
 
                 sqlWhere.append(columnName);
                 sqlWhere.append(condition);
-                sqlWhere.append("TO_TIMESTAMP(:").append(parameterName).append(", 'YYYY-MM-DD HH24:MI:SS')"); // Postgresql
+                sqlWhere.append(dialect.toTimestamp(parameterName, CustomEngine.DATETIME_PATTERN));
                 sqlParams.put(parameterName, datetimeStr);
             } else {
                 sqlWhere.append((value instanceof String && enableUppercaseAutomatically) ? "UPPER(" + columnName + ")" : columnName);
                 sqlWhere.append(condition);
                 sqlWhere.append(":").append(parameterName);
-                if (value instanceof String) {
-                    sqlParams.put(parameterName, enableUppercaseAutomatically ? ((String) value).toUpperCase() : (String) value);
-                } else if (value instanceof EnumIdentifiable) {
-                    sqlParams.put(parameterName, ((EnumIdentifiable<?>) value).getId());
-                } else if (value instanceof Enum) {
-                    sqlParams.put(parameterName, ((Enum<?>) value).name());
-                } else if (value instanceof Boolean) {
-                    sqlParams.put(parameterName, ((Boolean) value));
-                } else {
-                    sqlParams.put(parameterName, value);
-                }
+                sqlParams.put(parameterName, toParameterValue(value, enableUppercaseAutomatically));
             }
             index++;
         }
+    }
+
+    private static LocalDate toLocalDate(Date date) {
+        if (date instanceof java.sql.Date sqlDate) {
+            return sqlDate.toLocalDate();
+        }
+        return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+    }
+
+    private static Object toParameterValue(Object value, boolean uppercase) {
+        if (value instanceof String text) {
+            return uppercase ? text.toUpperCase(Locale.ROOT) : text;
+        } else if (value instanceof EnumIdentifiable<?> identifiable) {
+            return identifiable.getId();
+        } else if (value instanceof Enum<?> enumValue) {
+            return enumValue.name();
+        } else if (value instanceof Instant instant) {
+            return Timestamp.from(instant);
+        }
+        return value;
     }
 
     public void addConditionLike(String column, String value) {
@@ -324,15 +404,25 @@ public class SQLQueryDynamic {
             String columnName = getRealName(column);
             String parameterName = generateParameterName(columnName + "_" + index);
             sqlWhere.append(hasToIncludeOperator() ? operator.toSentence() : "");
-            String pInicio = (percentAtStart) ? "'%'||" : "";
-            String pFinal = (percentAtEnd) ? "||'%'" : "";
 
             sqlWhere.append(enableUppercaseAutomatically ? "UPPER(" + columnName + ")" : columnName);
-            sqlWhere.append(" LIKE ").append(pInicio).append(":").append(parameterName).append(pFinal);
+            sqlWhere.append(" LIKE ").append(likeExpression(parameterName, percentAtStart, percentAtEnd));
 
-            sqlParams.put(parameterName, value.trim().toUpperCase());
+            sqlParams.put(parameterName, value.trim().toUpperCase(Locale.ROOT));
             index++;
         }
+    }
+
+    private String likeExpression(String parameterName, boolean percentAtStart, boolean percentAtEnd) {
+        List<String> parts = new ArrayList<>(3);
+        if (percentAtStart) {
+            parts.add("'%'");
+        }
+        parts.add(":" + parameterName);
+        if (percentAtEnd) {
+            parts.add("'%'");
+        }
+        return parts.size() == 1 ? parts.get(0) : dialect.concat(parts.toArray(new String[0]));
     }
 
     public void addConditionLikesSmart(String column, String value) {
@@ -344,7 +434,7 @@ public class SQLQueryDynamic {
     }
 
     public void addConditionLikesSmart(String[] columns, String value, String splitRegex) {
-        if (value == null) {
+        if (value == null || columns == null || columns.length == 0) {
             return;
         }
         String[] splitValues = value.split(splitRegex);
@@ -360,26 +450,26 @@ public class SQLQueryDynamic {
         }
 
         String[] values = listValues.toArray(new String[0]);
+        String[] columnNames = new String[columns.length];
+        for (int j = 0; j < columns.length; j++) {
+            columnNames[j] = getRealName(columns[j]);
+        }
 
         boolean hasClauseWhere = index > 0;
-        boolean percentAtStart = true;
-        boolean percentAtEnd = true;
         int countItems = 0;
         StringBuilder internalSQL = new StringBuilder();
         for (int i = 0; i < values.length; i++) {
             internalSQL.append(i == 0 ? "(" : " AND (");
-            for (int j = 0; j < columns.length; j++) {
+            for (int j = 0; j < columnNames.length; j++) {
                 countItems++;
 
-                String columnName = getRealName(columns[j]);
+                String columnName = columnNames[j];
                 String parameterName = generateParameterName(columnName + "_" + index);
-                String pInicio = (percentAtStart) ? "'%'||" : "";
-                String pFinal = (percentAtEnd) ? "||'%'" : "";
 
                 internalSQL.append((j == 0) ? "" : " OR ");
                 internalSQL.append(enableUppercaseAutomatically ? "UPPER(" + columnName + ")" : columnName);
-                internalSQL.append(" LIKE ").append(pInicio).append(":").append(parameterName).append(pFinal);
-                sqlParams.put(parameterName, values[i].trim().toUpperCase());
+                internalSQL.append(" LIKE ").append(likeExpression(parameterName, true, true));
+                sqlParams.put(parameterName, values[i].trim().toUpperCase(Locale.ROOT));
                 index++;
             }
             internalSQL.append(")");
@@ -397,9 +487,14 @@ public class SQLQueryDynamic {
             if (columns.length != values.length) {
                 throw new IllegalArgumentException("QueryDynamic: The number of columns should be equal to the number of values?");
             }
+            if (matchModes == null || matchModes.length != columns.length) {
+                throw new IllegalArgumentException("QueryDynamic: The number of columns should be equal to the number of match modes");
+            }
 
             boolean apply = checkToApply(values);
             if (apply) {
+                int startLength = sqlWhere.length();
+                int startIndex = index;
 
                 // BUSCAMOS LAS POSICIONES DE LOS PARENTESIS IZQ
                 int indexLeftParenthesis = calculeLeftParenthesisIndex(values);
@@ -450,6 +545,11 @@ public class SQLQueryDynamic {
                     }
                     sqlWhere.append(rightParenthesis);
                 }
+
+                if (index == startIndex) {
+                    // nothing was applied (e.g. all values were zero): remove the empty parentheses
+                    sqlWhere.setLength(startLength);
+                }
             }
         }
     }
@@ -477,16 +577,9 @@ public class SQLQueryDynamic {
                 String parameterName = generateParameterName(columnName + "_" + index);
                 sqlWhere.append(i == 0 ? ":" : ",:").append(parameterName);
                 if (values[i] instanceof String) {
-                    sqlParams.put(parameterName, ((String) values[i]).toUpperCase());
-                } else if (values[i] instanceof Enum) {
-                    if (values[i] instanceof EnumIdentifiable) {
-                        sqlParams.put(parameterName, ((EnumIdentifiable) values[i]).getId());
-                    } else {
-                        sqlParams.put(parameterName, ((Enum) values[i]).name());
-                    }
-
+                    sqlParams.put(parameterName, ((String) values[i]).toUpperCase(Locale.ROOT));
                 } else {
-                    sqlParams.put(parameterName, values[i]);
+                    sqlParams.put(parameterName, toParameterValue(values[i], false));
                 }
                 index++;
             }
@@ -511,12 +604,27 @@ public class SQLQueryDynamic {
             sqlWhere.append(" AND ");
             sqlWhere.append(":").append(parameterNameEnd);
 
-            sqlParams.put(parameterNameStart, value1);
-            sqlParams.put(parameterNameEnd, value2);
+            sqlParams.put(parameterNameStart, toParameterValue(value1, false));
+            sqlParams.put(parameterNameEnd, toParameterValue(value2, false));
             index++;
         }
     }
 
+    /**
+     * Adds a condition over a JSON column. The {@code expression} is developer provided SQL appended after the column, where the {@code ${value}} placeholder is replaced by a bound parameter (values are never concatenated into the SQL).
+     *
+     * <ul>
+     * <li>{@code ->> 'id' = ${value}}: the placeholder is replaced by a parameter bound to the value.</li>
+     * <li>{@code ->> 'id' = '${value}'} or {@code @> '{"id": ${value}}'}: the whole literal containing the placeholder is replaced by a parameter bound to the literal text with the value substituted. Add an explicit cast when the database needs a type (e.g. {@code @> '{"id": ${value}}'::jsonb}).</li>
+     * </ul>
+     *
+     * @param column
+     *            column or mapped property
+     * @param expression
+     *            SQL expression (never user input)
+     * @param value
+     *            value to bind
+     */
     public void addConditionJson(String column, String expression, Object value) {
         boolean apply = checkToApply(value);
         if (apply) {
@@ -524,6 +632,16 @@ public class SQLQueryDynamic {
         }
     }
 
+    /**
+     * Same as {@link #addConditionJson(String, String, Object)} with several values joined with OR.
+     *
+     * @param column
+     *            column or mapped property
+     * @param expression
+     *            SQL expression (never user input)
+     * @param values
+     *            values to bind
+     */
     public void addConditionJson(String column, String expression, Object[] values) {
         boolean apply = checkToApply(values);
         if (apply) {
@@ -540,18 +658,87 @@ public class SQLQueryDynamic {
                 if (values[i] != null) {
 
                     String parameterName = generateParameterName(columnName + "_" + index);
-                    sqlWhere.append(hasToIncludeOperator() ? ((i == 0) ? " AND " : " OR ") : "");
+                    sqlWhere.append(hasToIncludeOperator() ? ((i == 0 || i == indexIzq) ? " AND " : " OR ") : "");
                     sqlWhere.append(leftParenthesis);
                     sqlWhere.append(columnName).append(" ");
-                    sqlWhere.append(expression.replace("${value}", values[i] + "")); // @TODO: debe ser escapado o preparar la
-                    // sentencia
-                    // sqlWhere.append(expression.replace("${value}", ":" + parameterName));
+                    sqlWhere.append(bindJsonExpression(expression, parameterName, values[i]));
                     sqlWhere.append(rightParenthesis);
-                    // sqlParams.put(parameterName, (values[i] instanceof String) ? (((String)
-                    // values[i]).trim().toUpperCase()) : values[i]);
                     index++;
                 }
             }
+        }
+    }
+
+    private String bindJsonExpression(String expression, String parameterName, Object value) {
+        if (expression == null) {
+            throw new IllegalArgumentException("QueryDynamic: JSON expression is required");
+        }
+        Object rawValue = toParameterValue(value, false);
+        String textValue = String.valueOf(rawValue);
+        StringBuilder result = new StringBuilder();
+        int occurrence = 0;
+        int i = 0;
+        while (i < expression.length()) {
+            char c = expression.charAt(i);
+            if (c == '\'') {
+                int end = i + 1;
+                while (end < expression.length()) {
+                    if (expression.charAt(end) == '\'') {
+                        if (end + 1 < expression.length() && expression.charAt(end + 1) == '\'') {
+                            end += 2;
+                            continue;
+                        }
+                        break;
+                    }
+                    end++;
+                }
+                String literal = expression.substring(i, Math.min(end + 1, expression.length()));
+                if (literal.contains(VALUE_PLACEHOLDER)) {
+                    String name = occurrence == 0 ? parameterName : parameterName + "_" + occurrence;
+                    occurrence++;
+                    String content = literal.length() >= 2 ? literal.substring(1, literal.length() - 1) : "";
+                    sqlParams.put(name, content.replace("''", "'").replace(VALUE_PLACEHOLDER, textValue));
+                    result.append(":").append(name);
+                } else {
+                    result.append(literal);
+                }
+                i = end + 1;
+            } else if (expression.startsWith(VALUE_PLACEHOLDER, i)) {
+                String name = occurrence == 0 ? parameterName : parameterName + "_" + occurrence;
+                occurrence++;
+                sqlParams.put(name, rawValue);
+                result.append(":").append(name);
+                i += VALUE_PLACEHOLDER.length();
+            } else {
+                result.append(c);
+                i++;
+            }
+        }
+        return result.toString();
+    }
+
+    /**
+     * Parses a textual sort direction.
+     *
+     * @param direction
+     *            {@code ASC}, {@code DESC}, {@code ASCENDING} or {@code DESCENDING} (case-insensitive); {@code null} or empty means ascending
+     * @return the sort order
+     * @throws IllegalArgumentException
+     *             for any other value
+     */
+    public static SortOrder parseSortOrder(String direction) {
+        if (direction == null || direction.trim().isEmpty()) {
+            return SortOrder.ASCENDING;
+        }
+        switch (direction.trim().toUpperCase(Locale.ROOT)) {
+            case "ASC" :
+            case "ASCENDING" :
+                return SortOrder.ASCENDING;
+            case "DESC" :
+            case "DESCENDING" :
+                return SortOrder.DESCENDING;
+            default :
+                throw new IllegalArgumentException("Invalid sort direction: '" + direction + "'. Allowed values are ASC or DESC");
         }
     }
 
@@ -573,25 +760,27 @@ public class SQLQueryDynamic {
             throw new IllegalArgumentException("QueryDynamic: The number of columns should be equal to the number of sortOrders");
         }
 
-        sqlOrderBy = new String[columns.length];
-        sqlOrderByDesc = new boolean[sortOrders.length];
+        String[] orderBy = new String[columns.length];
+        boolean[] orderByDesc = new boolean[sortOrders.length];
 
         for (int i = 0; i < columns.length; i++) {
-            String columnName = getRealName(columns[i]);
-            sqlOrderBy[i] = columnName;
-            sqlOrderByDesc[i] = sortOrders[i] == SortOrder.DESCENDING;
+            orderBy[i] = getRealName(columns[i]);
+            orderByDesc[i] = sortOrders[i] == SortOrder.DESCENDING;
         }
+        sqlOrderBy = orderBy;
+        sqlOrderByDesc = orderByDesc;
     }
 
     public final void setOrderBy(List<String> columns, SortOrder sort) {
-        sqlOrderBy = new String[columns.size()];
-        sqlOrderByDesc = new boolean[columns.size()];
+        String[] orderBy = new String[columns.size()];
+        boolean[] orderByDesc = new boolean[columns.size()];
 
         for (int i = 0; i < columns.size(); i++) {
-            String columnName = getRealName(columns.get(i));
-            sqlOrderBy[i] = columnName;
-            sqlOrderByDesc[i] = sort == SortOrder.DESCENDING;
+            orderBy[i] = getRealName(columns.get(i));
+            orderByDesc[i] = sort == SortOrder.DESCENDING;
         }
+        sqlOrderBy = orderBy;
+        sqlOrderByDesc = orderByDesc;
     }
 
     public final void setOrderBy(String column, String defaultColumn, SortOrder sortOrder) {
@@ -613,16 +802,30 @@ public class SQLQueryDynamic {
         }
     }
 
+    private boolean selectHasTopLevelWhere() {
+        if (selectHasWhere == null) {
+            int from = SqlUtils.indexOfTopLevel(sqlSelect, "FROM");
+            selectHasWhere = from >= 0 && SqlUtils.indexOfTopLevel(sqlSelect, "WHERE", from) >= 0;
+        }
+        return selectHasWhere;
+    }
+
+    private String whereClause() {
+        if (!hasConditions()) {
+            return "";
+        }
+        // the base SQL already has a WHERE clause: the dynamic conditions are appended with AND
+        return selectHasTopLevelWhere() ? " AND (" + sqlWhere + ")" : " WHERE " + sqlWhere;
+    }
+
     public String getSQL() {
         StringBuilder sql = new StringBuilder();
         sql.append(sqlSelect);
         if (!sqlJoins.isEmpty()) {
             sql.append(sqlJoins);
         }
+        sql.append(whereClause());
 
-        if (index > 0) {
-            sql.append(" WHERE ").append(sqlWhere);
-        }
         // Aqui se genera el order by
         if (sqlOrderBy != null && sqlOrderBy.length > 0) {
             sql.append(" ORDER BY ");
@@ -639,62 +842,86 @@ public class SQLQueryDynamic {
         return sql.toString();
     }
 
+    /**
+     * Generates the SQL used to count the records of this query. A simple {@code SELECT ... FROM} is rewritten as {@code SELECT count(*) FROM ...}; queries using DISTINCT, GROUP BY, HAVING, set operators or an ORDER BY in the base SQL are wrapped: {@code SELECT count(*) FROM (<query>) count_query}.
+     *
+     * @return SQL count
+     */
     public String getSQLCount() {
         StringBuilder sql = new StringBuilder();
-        if (sqlSelect != null) {
-            int indexFrom = sqlSelect.toUpperCase().indexOf(" FROM ");
-            sql.append("SELECT count(*)").append(sqlSelect.substring(indexFrom));
-        }
-        if (!sqlJoins.isEmpty()) {
-            sql.append(" ").append(sqlJoins);
-        }
-        if (!sqlParams.isEmpty() || index > 0) {
-            sql.append(" WHERE ").append(sqlWhere);
+        String where = whereClause();
+        int indexFrom = SqlUtils.indexOfTopLevel(sqlSelect, "FROM");
+        if (indexFrom > 0 && !requiresCountWrapper(indexFrom)) {
+            sql.append("SELECT count(*) ").append(sqlSelect.substring(indexFrom));
+            if (!sqlJoins.isEmpty()) {
+                sql.append(sqlJoins);
+            }
+            sql.append(where);
+        } else {
+            sql.append("SELECT count(*) FROM (").append(sqlSelect);
+            if (!sqlJoins.isEmpty()) {
+                sql.append(sqlJoins);
+            }
+            sql.append(where);
+            sql.append(") count_query");
         }
         return sql.toString();
     }
 
+    private boolean requiresCountWrapper(int indexFrom) {
+        String selectPart = sqlSelect.substring(0, indexFrom);
+        if (SqlUtils.indexOfTopLevel(selectPart, "DISTINCT") >= 0 || SqlUtils.indexOfTopLevel(selectPart, "TOP") >= 0) {
+            return true;
+        }
+        for (String keyword : new String[]{"GROUP BY", "HAVING", "UNION", "INTERSECT", "EXCEPT", "MINUS", "ORDER BY", "LIMIT", "OFFSET", "FETCH"}) {
+            if (SqlUtils.indexOfTopLevel(sqlSelect, keyword, indexFrom) >= 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Generates a DELETE statement using the FROM clause of the base SQL and the applied conditions.
+     *
+     * @return SQL delete
+     * @throws DataException
+     *             when no condition was applied (a DELETE without WHERE would remove the whole table) or the query contains joins
+     */
     public String getSQLDelete() {
-        StringBuilder sql = new StringBuilder();
-        if (sqlSelect != null) {
-            int indexFrom = sqlSelect.toUpperCase().indexOf(" FROM ");
-            sql.append("DELETE").append(sqlSelect.substring(indexFrom));
+        int indexFrom = SqlUtils.indexOfTopLevel(sqlSelect, "FROM");
+        if (indexFrom < 0) {
+            throw new DataException("Unable to generate DELETE: the base SQL has no FROM clause");
         }
-        if (!sqlJoins.isEmpty()) {
-            sql.append(" ").append(sqlJoins);
+        String fromPart = sqlSelect.substring(indexFrom);
+        if (!sqlJoins.isEmpty() || SqlUtils.indexOfTopLevel(fromPart, "JOIN") >= 0) {
+            throw new DataException("Unable to generate DELETE: joins are not supported");
         }
-        if (!sqlParams.isEmpty() || index > 0) {
-            sql.append(" WHERE ").append(sqlWhere);
+        if (!hasConditions() && !selectHasTopLevelWhere()) {
+            throw new DataException("Refusing to generate a DELETE without WHERE conditions: no condition was applied and the whole table would be deleted");
         }
-        return sql.toString();
+        return "DELETE " + fromPart + whereClause();
     }
 
     protected boolean checkToApply(Object value) {
-        if (value instanceof Integer) {
-            Integer i = (Integer) value;
-            return (i != 0);
-        } else if (value instanceof Long) {
-            Long l = (Long) value;
-            return (l != 0);
-        } else if (value instanceof String) {
-            String s = (String) value;
+        if (value == null) {
+            return false;
+        } else if (value instanceof String s) {
             return (s.trim().compareTo("") != 0);
-        } else if (value instanceof Date) {
-            Date d = (Date) value;
-            return (d != null);
-        } else if (value instanceof Time) {
-            Time t = (Time) value;
-            return (t != null);
-        } else if (value instanceof LocalDate) {
-            LocalDate d = (LocalDate) value;
-            return (d != null);
-        } else if (value instanceof LocalDateTime) {
-            LocalDateTime d = (LocalDateTime) value;
-            return (d != null);
-        } else if (value instanceof Enum) {
-            return (value != null);
-        } else if (value instanceof Boolean) {
-            return (value != null);
+        } else if (value instanceof BigDecimal bd) {
+            return bd.signum() != 0;
+        } else if (value instanceof BigInteger bi) {
+            return bi.signum() != 0;
+        } else if (value instanceof Double d) {
+            return d != 0 && !d.isNaN();
+        } else if (value instanceof Float f) {
+            return f != 0 && !f.isNaN();
+        } else if (value instanceof Number n) {
+            // Integer, Long, Short, Byte, AtomicInteger, AtomicLong...
+            return n.longValue() != 0;
+        } else if (value instanceof Date || value instanceof Time || value instanceof Temporal || value instanceof UUID || value instanceof Enum || value instanceof Boolean
+                || value instanceof Character) {
+            return true;
         } else if (value instanceof Object[]) {
             boolean allNulls = true;
             for (Object v : (Object[]) value) {
@@ -709,8 +936,8 @@ public class SQLQueryDynamic {
                 }
             }
             return !allNulls;
-        } else if (value instanceof List) {
-            return !((List) value).isEmpty();
+        } else if (value instanceof Collection<?> collection) {
+            return !collection.isEmpty();
         } else if (value instanceof byte[] bytes) {
             return (bytes.length > 0);
         } else {
@@ -756,17 +983,31 @@ public class SQLQueryDynamic {
 
     public void addGroupConditions(List<GroupCondition> groupConditions) {
         if (!Utils.isNullOrEmpty(groupConditions)) {
+            int startLength = this.sqlWhere.length();
             this.sqlWhere.append((this.index == 0) ? "(" : " AND (");
-            for (int i = 0; i < groupConditions.size(); i++) {
-                if (i > 0) {
+            boolean anyApplied = false;
+            for (GroupCondition groupCondition : groupConditions) {
+                if (groupCondition == null) {
+                    continue;
+                }
+                int groupLength = this.sqlWhere.length();
+                int groupIndex = this.index;
+                if (anyApplied) {
                     this.sqlWhere.append(" OR ");
                 }
-                generateConditions(groupConditions.get(i).getConditions());
+                generateConditions(groupCondition.getConditions());
+                if (this.index == groupIndex) {
+                    // no condition of the group could be applied: remove what was written
+                    this.sqlWhere.setLength(groupLength);
+                } else {
+                    anyApplied = true;
+                }
             }
-            this.sqlWhere.append(")");
-
-            // removing empty parentheses when condition groups cannot be applied
-            Utils.replaceAll(sqlWhere, " AND (())", "");
+            if (anyApplied) {
+                this.sqlWhere.append(")");
+            } else {
+                this.sqlWhere.setLength(startLength);
+            }
         }
     }
 
@@ -821,7 +1062,9 @@ public class SQLQueryDynamic {
                 addConditionLike(Operator.AND, condition.getColumn(), String.valueOf(condition.getValue()), false, true);
                 break;
             case IN :
-                if (!(condition.getValue() instanceof Object[])) {
+                if (condition.getValue() instanceof Collection<?> collection) {
+                    addConditionIn(Operator.AND, condition.getColumn(), collection.toArray());
+                } else if (!(condition.getValue() instanceof Object[])) {
                     addConditionIn(Operator.AND, condition.getColumn(), new Object[]{condition.getValue()});
                 } else {
                     addConditionIn(Operator.AND, condition.getColumn(), (Object[]) condition.getValue());
@@ -851,40 +1094,44 @@ public class SQLQueryDynamic {
     }
 
     private void checkDataTypeAndMatchMode(GroupCondition.Condition condition) {
+        if (condition.getDataType() == null || condition.getMatchMode() == null) {
+            throw new IllegalArgumentException("QueryDynamic: dataType and matchMode are required for column " + condition.getColumn());
+        }
         boolean contains = Arrays.stream(condition.getDataType().getMatchModes()).anyMatch(condition.getMatchMode()::equals);
         if (!contains) {
             throw new IllegalArgumentException("QueryDynamic: MatchMode." + condition.getMatchMode() + " is not supported with " + condition.getDataType());
         }
 
-        if (condition.getDataType() == DataType.DATE && !(condition.getValue() instanceof Date || condition.getValue() instanceof LocalDate || condition.getValue() instanceof List)) {
+        if (condition.getDataType() == DataType.DATE && condition.getValue() != null
+                && !(condition.getValue() instanceof Date || condition.getValue() instanceof LocalDate || condition.getValue() instanceof LocalDateTime || condition.getValue() instanceof List)) {
             throw new IllegalArgumentException("QueryDynamic: DataType.DATE cannot be applied to " + condition.getValue());
         }
     }
 
+    /**
+     * Resolves a column: a property of the mapped class (or of a joined class, prefixed by its alias) is translated to the qualified column name; anything else must be a plain SQL identifier.
+     *
+     * @param column
+     *            property or column name
+     * @return the SQL column reference
+     * @throws IllegalArgumentException
+     *             when the column is not a mapped property nor a valid identifier
+     */
     private String getRealName(String column) {
+        String mapped = (propertiesTranslationMap != null && column != null) ? propertiesTranslationMap.get(column) : null;
+        String fullColumnName = (mapped != null) ? mapped : SqlUtils.requireIdentifier(column);
 
-        String fullColumnName = (propertiesTranslationMap != null) ? propertiesTranslationMap.get(column) : column;
-        if (fullColumnName == null) {
-            fullColumnName = column;
-        }
-
-        if (fullColumnName.contains(".")) {
-            String args[] = fullColumnName.split("\\.");
-            String tableName = args[0];
-            String columnName = args[1];
-
-            if (aliasMap.containsKey(tableName)) {
+        int dot = fullColumnName.lastIndexOf('.');
+        if (dot > 0) {
+            String tableName = fullColumnName.substring(0, dot);
+            String alias = aliasMap.get(tableName);
+            if (alias != null) {
                 // The table name has an alias, so we replace it in the column name
-                return aliasMap.get(tableName) + "." + columnName;
-            } else {
-                // There is not a alias generated automatically for the table, so we return the
-                // column name with the original table name
-                return fullColumnName;
+                return alias + "." + fullColumnName.substring(dot + 1);
             }
-
-        } else {
-            return fullColumnName;
         }
+        // There is not a alias generated automatically for the table, so we return the column name
+        return fullColumnName;
     }
 
     private String generateJoinAlias(String alias, String name) {

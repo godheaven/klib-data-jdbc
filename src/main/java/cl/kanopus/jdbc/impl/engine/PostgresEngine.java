@@ -23,6 +23,8 @@
  */
 package cl.kanopus.jdbc.impl.engine;
 
+import org.postgresql.util.PGobject;
+
 public class PostgresEngine implements CustomEngine {
 
     protected PostgresEngine() {
@@ -57,5 +59,36 @@ public class PostgresEngine implements CustomEngine {
     @Override
     public String prepareSQL2Engine(String sql) {
         return sql;
+    }
+
+    @Override
+    public String castToDate(String column) {
+        return column + "::date";
+    }
+
+    /**
+     * JSON values are bound as {@code PGobject} of type json, so they can be stored into json/jsonb columns. The PostgreSQL driver is only required when this method is invoked.
+     */
+    @Override
+    public Object toJsonParameter(String json) {
+        return PgJson.create(json);
+    }
+
+    /** Isolates the reference to the PostgreSQL driver class. */
+    private static final class PgJson {
+
+        private PgJson() {
+        }
+
+        static Object create(String json) {
+            try {
+                PGobject jsonObject = new PGobject();
+                jsonObject.setType("json");
+                jsonObject.setValue(json);
+                return jsonObject;
+            } catch (java.sql.SQLException ex) {
+                throw new IllegalStateException("Unable to create PostgreSQL json parameter", ex);
+            }
+        }
     }
 }

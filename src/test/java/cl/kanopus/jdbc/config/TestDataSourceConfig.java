@@ -34,6 +34,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 
 @Configuration
 @EnableTransactionManagement
@@ -41,15 +43,28 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Import({cl.kanopus.jdbc.impl.DAOTestImpl.class, cl.kanopus.jdbc.example.ExampleDAO.class})
 public class TestDataSourceConfig {
 
+    /**
+     * PostgreSQL started once per JVM with Testcontainers; {@code schema.sql} creates and populates the test tables. The container is stopped by the Testcontainers resource reaper when the JVM ends.
+     */
+    static final PostgreSQLContainer POSTGRES = startPostgres();
+
+    @SuppressWarnings("resource")
+    private static PostgreSQLContainer startPostgres() {
+        PostgreSQLContainer container = new PostgreSQLContainer(DockerImageName.parse("postgres:16-alpine")).withDatabaseName("test").withUsername("user_test").withPassword("pass_test")
+                .withInitScript("schema.sql");
+        container.start();
+        return container;
+    }
+
     @Bean(destroyMethod = "close")
     public HikariDataSource dataSource() {
         HikariConfig cfg = new HikariConfig();
         cfg.setDriverClassName("org.postgresql.Driver");
-        cfg.setJdbcUrl("jdbc:postgresql://localhost:5432/test?useSSL=false");
-        cfg.setUsername("user_test");
-        cfg.setPassword("pass_test");
+        cfg.setJdbcUrl(POSTGRES.getJdbcUrl());
+        cfg.setUsername(POSTGRES.getUsername());
+        cfg.setPassword(POSTGRES.getPassword());
         cfg.setMaximumPoolSize(10);
-        cfg.setMinimumIdle(3);
+        cfg.setMinimumIdle(1);
         return new HikariDataSource(cfg);
     }
 

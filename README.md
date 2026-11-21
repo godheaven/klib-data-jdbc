@@ -81,9 +81,9 @@ public class TestTypeDAO extends AbstractBaseDAO<TestType, Long> implements DAOI
 }
 ```
 
-When running tests or integrating with a Spring application, configure a `DataSource` (see
+When running tests or integrating with a Spring application, configure a `DataSource` and a connection pool (see
 `test/config/TestDataSourceConfig.java`) and include the proper JDBC driver for your database (
-Postgres/Oracle/SQLServer).
+Postgres/Oracle/SQLServer/DB2).
 
 1. Simple mapping
 
@@ -450,6 +450,58 @@ public class ExampleService {
     }
 }
 
+```
+
+## 🔒 Security
+
+- Values are always sent as bind parameters, including the values of `addConditionJson` (the `${value}` placeholder is
+  replaced by a named parameter; when it appears inside a quoted literal the whole literal becomes the parameter, add an
+  explicit cast if the database needs a type, e.g. `@> '{"id": ${value}}'::jsonb`).
+- Column names received by `SQLQueryDynamic` (`addCondition*`, `setOrderBy`, `OrderBy`, `GroupCondition`) must be a mapped
+  property of the entity (e.g. `group.text`) or a plain identifier matching
+  `^[A-Za-z_][A-Za-z0-9_$]*(\.[A-Za-z_][A-Za-z0-9_$]*){0,2}$` (`column`, `table.column` or `schema.table.column`).
+  Anything else (expressions, spaces, quotes, comments, `;`) is rejected with `IllegalArgumentException`.
+  Use `SQLQueryDynamic.parseSortOrder(String)` to validate a textual `ASC`/`DESC` received from a client.
+- `addCustomCondition(String)` and the expression of `addConditionJson` are appended as raw SQL: never build them with
+  user input.
+- `delete(SQLQueryDynamic)` / `getSQLDelete()` refuse to generate a `DELETE` without an applied condition (it would remove
+  the whole table) and throw `DataException`.
+- SQL is logged at `DEBUG` with the parameter names only; parameter values are never logged by the library.
+
+## ⚠️ Breaking changes in 4.20.0
+
+- **Unsafe identifiers are rejected**: columns that are neither a mapped property nor a plain identifier now throw
+  `IllegalArgumentException` (before they were concatenated into the SQL). Replace expressions such as
+  `addCondition("LOWER(name)", ...)` with `addCustomCondition` + `addCustomParam`.
+- `delete(SQLQueryDynamic)` throws `DataException` when no condition was applied, and when the query has joins.
+- `addConditionJson` binds the value instead of concatenating it (see *Security*).
+- `getSQLCount()` no longer appends an empty `WHERE` when only custom params were added, ignores sub-selects in the column
+  list and wraps queries with `DISTINCT`/`GROUP BY`/`UNION`/... as `SELECT count(*) FROM (<query>) count_query`.
+  When the base SQL already has a `WHERE`, dynamic conditions are appended with `AND (...)`.
+- `JdbcCache.translationMap(...)` and `SqlBase.getAliasMap()` return immutable maps (they are shared by all threads).
+- Binary columns (`ByteaJsonParser`, `ByteaJsonListParser`, `StringWriter`) are converted with **UTF-8** instead of
+  ISO-8859-1. Start the JVM with `-Dkanopus.jdbc.charset=ISO-8859-1` to keep reading data written by previous versions.
+- Fields declared in superclasses are now mapped, unless the superclass is itself annotated with `@Table` or `@View`.
+- JSON columns are bound as `PGobject` only for `Engine.POSTGRES`; other engines receive a `String`, and the PostgreSQL
+  driver is no longer needed at runtime for them.
+- Engine specific SQL (`::date`, `TO_TIMESTAMP`, `||`) is generated/translated by the engine classes and
+  `prepareSQL2Engine` is applied to every query executed by `AbstractDAO` (raw SQL included). For SQL Server, `||` is no
+  longer replaced inside string literals, `OFFSET/FETCH` gets `ORDER BY (SELECT NULL)` when the query has no `ORDER BY`,
+  and `DELETE FROM t alias` is rewritten as `DELETE alias FROM t alias`. `SQLQueryDynamic.setEngine(Engine)` renders the
+  native syntax directly.
+- `findTop` orders by every primary key column (each with the requested direction), `existsById` supports composite ids
+  and `findPaginator(query, clazz)` maps the records with `clazz`.
+- Dependencies: `spring-jdbc` instead of `spring-boot-starter-jdbc` (add your connection pool, e.g. HikariCP, in the
+  application) and `ojdbc11` instead of `ojdbc8`.
+
+## 🧪 Tests
+
+Tests run against PostgreSQL started automatically with [Testcontainers](https://testcontainers.com/) (Docker is
+required); `src/test/resources/schema.sql` creates and populates the schema. SQL Server, Oracle and DB2 SQL generation is
+covered by unit tests.
+
+```bash
+mvn verify
 ```
 
 ## 👤 Author

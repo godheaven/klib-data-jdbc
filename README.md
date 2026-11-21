@@ -2,7 +2,7 @@
   <img src="https://www.kanopus.cl/assets/kanopus_black.png" width="220" alt="Kanopus logo"/>
 </p>
 
-![Maven](https://img.shields.io/maven-central/v/cl.kanopus.util/klib-data-jdbc) ![License](https://img.shields.io/badge/license-Apache%20License%202.0-blue) ![Java](https://img.shields.io/badge/java-17+-orange)
+![Maven](https://img.shields.io/maven-central/v/cl.kanopus.util/klib-data-jdbc) ![License](https://img.shields.io/badge/license-Apache%20License%202.0-blue) ![Java](https://img.shields.io/badge/java-21+-orange)
 
 # klib-data-jdbc
 
@@ -40,7 +40,7 @@ Add the dependency to your `pom.xml`:
 <dependency>
 	<groupId>cl.kanopus.util</groupId>
 	<artifactId>klib-data-jdbc</artifactId>
-	<version>4.06.3</version>
+	<version>4.20.0</version>
 </dependency>
 ```
 

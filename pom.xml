@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>cl.kanopus</groupId>
 		<artifactId>kanopus-boot-parent</artifactId>
-		<version>4.06.3</version>
+		<version>4.20.0</version>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
@@ -13,6 +13,8 @@
 	<artifactId>klib-data-jdbc</artifactId>
 	<packaging>jar</packaging>
 	<name>klib-data-jdbc</name>
+
+	<url>https://github.com/godheaven/klib-data-jdbc</url>
 
 	<scm>
 		<connection>scm:git:https://github.com/godheaven/klib-data-jdbc.git</connection>

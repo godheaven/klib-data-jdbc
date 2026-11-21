@@ -493,6 +493,8 @@ public class ExampleService {
   and `findPaginator(query, clazz)` maps the records with `clazz`.
 - Dependencies: `spring-jdbc` instead of `spring-boot-starter-jdbc` (add your connection pool, e.g. HikariCP, in the
   application) and `ojdbc11` instead of `ojdbc8`.
+- Parent: `kanopus-core-parent` instead of `kanopus-boot-parent`. The library no longer pulls
+  `spring-boot-starter-web` (Tomcat) or springdoc transitively; applications declare them if they need them.
 
 ## 🧪 Tests
 

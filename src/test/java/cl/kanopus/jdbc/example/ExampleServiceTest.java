@@ -44,9 +44,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.annotation.Transactional;
 
 @ContextConfiguration(classes = {TestDataSourceConfig.class})
 @ExtendWith(SpringExtension.class)
+@Transactional // every test runs in a transaction rolled back at the end: no shared state between tests
 class ExampleServiceTest {
 
     @Autowired

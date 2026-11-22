@@ -59,12 +59,14 @@ import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Regression tests of {@link AbstractDAO} executed against PostgreSQL (Testcontainers).
  */
 @ContextConfiguration(classes = {TestDataSourceConfig.class})
 @ExtendWith(SpringExtension.class)
+@Transactional // every test runs in a transaction rolled back at the end: no shared state between tests
 class AbstractDAORegressionTest {
 
     @Autowired
@@ -108,6 +110,12 @@ class AbstractDAORegressionTest {
 
     @Test
     void injectionAttemptsAreRejectedOrBound() {
+        // own row with unique JSON values: seed rows are shared with (and modified by) other tests
+        long typesBefore = daoTest.queryForLong("SELECT count(*) FROM tmp_test_type", new HashMap<>());
+        long id = daoTest.queryForLong("INSERT INTO tmp_test_data(td_system_id, td_login_id, td_date, td_local_date, td_local_date_time, td_text, td_status, td_data_json, fk_test_type) "
+                + "VALUES (1, 'inj-test', now(), current_date, now(), 'injection test', 'SUCCESS', " + "'{\"id\":987654,\"text\":\"inj-unique-7f3\",\"enabled\":true}', 1) RETURNING pk_test_data",
+                new HashMap<>());
+
         SQLQueryDynamic order = new SQLQueryDynamic(TestData.class);
         assertThrows(IllegalArgumentException.class, () -> order.setOrderBy("pk_test_data; DROP TABLE tmp_test_type"));
         assertThrows(IllegalArgumentException.class, () -> order.addCondition("1=1 OR pk_test_data", 1, Condition.EQUAL));
@@ -117,17 +125,18 @@ class AbstractDAORegressionTest {
         assertTrue(dao.query(attack).isEmpty());
 
         SQLQueryDynamic json = new SQLQueryDynamic(TestData.class);
-        json.addConditionJson("td_data_json", "->> 'text' = '${value}'", "one");
+        json.addConditionJson("td_data_json", "->> 'text' = '${value}'", "inj-unique-7f3");
         List<TestData> records = dao.query(json);
         assertEquals(1, records.size());
-        assertEquals("one", records.get(0).getJson().getText());
+        assertEquals(id, records.get(0).getId());
+        assertEquals("inj-unique-7f3", records.get(0).getJson().getText());
 
         SQLQueryDynamic jsonContains = new SQLQueryDynamic(TestData.class);
-        jsonContains.addConditionJson("td_data_json", "@> '{\"id\": ${value}}'::jsonb", 1);
+        jsonContains.addConditionJson("td_data_json", "@> '{\"id\": ${value}}'::jsonb", 987654);
         assertEquals(1, dao.query(jsonContains).size());
 
-        // the table still exists
-        assertEquals(2, daoTest.queryForLong("SELECT count(*) FROM tmp_test_type", new HashMap<>()));
+        // the table still exists and was not modified
+        assertEquals(typesBefore, daoTest.queryForLong("SELECT count(*) FROM tmp_test_type", new HashMap<>()));
     }
 
     @Test
